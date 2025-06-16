@@ -13,7 +13,14 @@ The mod uses my own custom decor placement system, entirely separate from all ot
 There are some notable differences between the default placement system and my custom placement system.
 1. There are no dotted white borders. This border would be distracting while you're trying to be creative, especially if you have a lot of decor items and they each have their own border.
 2. There are no red and green placement permission indicators. These indicators are helpful for normal furniture but they entirely mask the object texture so having them would hinder creativity. Instead, I've opted to allow full clipping of decor objects rather than attempting to restrict them.
-3. Height controls: You can control the height of decor objects by holding Shift and using the mouse wheel. Hold Shift + Ctrl while using the mouse wheel for precision height adjustment. Press Ctrl + T to reset height to zero.
+3. Height controls
+You can control the height of decor objects by holding Shift and using the mouse wheel.
+Hold Shift + Ctrl while using the mouse wheel for precision height adjustment.
+Press Ctrl + T to reset height to zero.
+4. Rotation Controls
+You can control the rotation of decor objects by using the mouse wheel while no keyboard keys are pressed.
+Hold Ctrl while using the mouse wheel for precision rotation adjustment.
+Press Ctrl + R to reset rotation to zero.
 ### Key Features
 
 - Base mod with modular content packs
