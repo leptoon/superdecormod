@@ -13,7 +13,7 @@ The mod uses my own custom decor placement system, entirely separate from all ot
 There are some notable differences between the default placement system and my custom placement system.
 1. There are no dotted white borders. This border would be distracting while you're trying to be creative, especially if you have a lot of decor items and they each have their own border.
 2. There are no red and green placement permission indicators. These indicators are helpful for normal furniture but they entirely mask the object texture so having them would hinder creativity. Instead, I've opted to allow full clipping of decor objects rather than attempting to restrict them.
-3. Precision height and rotation controls
+3. Precision height and rotation controls.
 ### Key Features
 
 - Base mod with modular content packs
