@@ -1,422 +1,256 @@
-# Super Decor Expansion Pack API Documentation
+# Super Decor Expansion API Documentation
+Version 1.2.0
 
 ## Overview
+The Super Decor Expansion API allows mod developers to create expansion packs that add new decorative items to Supermarket Simulator. These items will appear in the Furnitures section of the in-game computer for purchase.
 
-The Super Decor Expansion Pack API provides a comprehensive framework for developers to create expansion packs that seamlessly integrate with the Super Decor mod for Supermarket Simulator. This API follows a modular architecture similar to The Sims expansion pack system, where the base Super Decor mod must be installed for any expansion packs to function.
+## Important Notes
+- **Categories are not currently used**: While the API supports categorization, all items currently appear in the Furnitures page regardless of their assigned category. Categories are implemented for future use when a custom decor UI might be added.
+- All expansion pack items are assigned IDs in the range 760000-999999
+- The base framework (com.leptoon.supermarketdecomod1) must be installed for expansion packs to work
 
-## Core Architecture
+## Getting Started
 
-### API System (`DecorExpansionAPI.cs`)
-
-The Super Decor API serves as the central interface between expansion packs and the base mod. It provides complete functionality for:
-
-- **Expansion Pack Registration**: Secure registration system with dependency management
-- **Item Management**: Deterministic ID assignment and item registration
-- **Asset Integration**: Full support for custom models, textures, and materials
-- **Configuration Management**: Per-expansion configuration with persistent storage
-- **Spawning System**: Direct integration with the game's furniture placement system
-
-### Key Technical Features
-
-#### Deterministic ID Generation
-The API uses a cryptographic hash-based system to generate furniture IDs, ensuring that:
-- Each item receives a unique, persistent ID between 760000-999999
-- IDs remain constant across game sessions, mod reinstalls, and load order changes
-- Save files remain valid regardless of expansion pack installation order
-- Hash collisions are automatically detected and resolved
-
-#### Dependency Management
-- Expansion packs can declare dependencies on other expansion packs
-- The API validates all dependencies before allowing item registration
-- Circular dependencies are prevented through validation checks
-- Version compatibility can be enforced through the dependency system
-
-#### Memory-Efficient Asset System
-- Assets are loaded on-demand and cached for performance
-- Unused assets can be unloaded to conserve memory
-- Fallback assets are provided if custom assets fail to load
-- Support for Unity AssetBundles enables professional-quality content
-
-## Data Structures
-
-### DecorItemData Class
-
-The `DecorItemData` class defines all properties of a decorative item:
-
-#### Identity Properties
-- `InternalName`: Unique identifier within the expansion pack
-- `ItemName`: Display name shown to players
-- `Description`: Item description for UI tooltips
-- `Category`: Classification (Furniture, WallDecor, FloorDecor, Lighting, Plants, Sculptures, Storage, Seasonal, Other)
-
-#### Physical Properties
-- `BoxSize`: Shipping box size (matches game's box size system)
-- `CollisionSize`: 3D bounding box for collision detection
-- `CollisionCenter`: Offset for collision box center
-- `Weight`: Item weight affecting physics
-- `Fragility`: Damage susceptibility (0.0-1.0)
-
-#### Visual Properties
-- `VisualScale`: Display scale multiplier
-- `CustomMesh`: Optional custom 3D model
-- `CustomMaterial`: Optional custom material/shader
-- `IconTexture`: UI icon for menus
-- `CustomPrefabName`: Reference to complex prefab in asset bundle
-
-#### Economic Properties
-- `BaseCost`: Purchase price
-- `DeliveryFee`: Shipping cost
-- `DeliveryCost`: Additional delivery charges
-- `SellPrice`: Resale value
-
-#### Placement Rules
-- `CanPlaceOnFloor`: Floor placement allowed
-- `CanPlaceOnWalls`: Wall mounting allowed
-- `CanPlaceOnShelves`: Shelf placement allowed
-- `IsSinglePlacement`: Restricts to one instance
-- `RequiresFloorContact`: Must touch ground
-- `AllowFloating`: Can be placed in mid-air
-
-#### Interaction Settings
-- `IsInteractable`: Player can interact with item
-- `IsMoveable`: Can be relocated after placement
-- `CanRotate`: Rotation allowed during placement
-- `CanScale`: Dynamic scaling permitted
-- `IsWalkable`: Players can walk through item
-
-## API Methods
-
-### Expansion Pack Registration
-
+### Basic Expansion Pack Structure
 ```csharp
-public static bool RegisterExpansionPack(
-    string packId,           // Unique identifier
-    string packName,         // Display name
-    string packVersion,      // Version string
-    string author = "",      // Author name
-    string[] dependencies = null  // Required packs
-)
-```
+using BepInEx;
+using SupermarketDecorMod1.API;
+using SupermarketDecorMod1.Data;
 
-Registers an expansion pack with the Super Decor system. This must be called before registering any items.
-
-### Item Registration
-
-```csharp
-public static int RegisterDecorItem(
-    string packId,
-    DecorItemData itemData
-)
-```
-
-Registers a single decorative item. Returns the assigned furniture ID (760000+) or -1 on failure.
-
-```csharp
-public static List<int> RegisterDecorItems(
-    string packId,
-    List<DecorItemData> items
-)
-```
-
-Batch registration for multiple items. Returns list of assigned IDs.
-
-### Asset Management
-
-```csharp
-public static bool RegisterAssets(
-    string packId,
-    string assetBundlePath
-)
-```
-
-Loads an asset bundle from disk and associates it with the expansion pack.
-
-```csharp
-public static void RegisterAssetBundle(
-    string packId,
-    AssetBundle bundle
-)
-```
-
-Registers an already-loaded asset bundle.
-
-```csharp
-public static T LoadAsset<T>(
-    string packId,
-    string assetName
-) where T : UnityEngine.Object
-```
-
-Loads a specific asset from the expansion's asset bundle.
-
-### Item Spawning
-
-```csharp
-public static GameObject SpawnDecorItem(
-    string internalName,
-    Vector3 position,
-    Quaternion rotation
-)
-```
-
-Spawns an item by its internal name at the specified location.
-
-```csharp
-public static GameObject SpawnDecorItem(
-    int furnitureId,
-    Vector3 position,
-    Quaternion rotation
-)
-```
-
-Spawns an item by its furniture ID.
-
-### Configuration Management
-
-```csharp
-public static T GetConfig<T>(
-    string packId,
-    string key,
-    T defaultValue
-)
-```
-
-Retrieves a configuration value for the expansion pack.
-
-```csharp
-public static void SetConfig<T>(
-    string packId,
-    string key,
-    T value
-)
-```
-
-Stores a configuration value persistently.
-
-### Query Methods
-
-```csharp
-public static bool IsExpansionPackRegistered(string packId)
-```
-
-Checks if an expansion pack is registered.
-
-```csharp
-public static List<DecorItemData> GetExpansionPackItems(string packId)
-```
-
-Returns all items registered by a specific expansion pack.
-
-```csharp
-public static DecorItemData GetDecorItem(string packId, string internalName)
-```
-
-Retrieves item data by pack ID and internal name.
-
-```csharp
-public static bool IsExpansionItem(int furnitureId)
-```
-
-Checks if a furniture ID belongs to expansion content (ID >= 760000).
-
-```csharp
-public static Dictionary<string, ExpansionPackInfo> GetRegisteredExpansionPacks()
-```
-
-Returns information about all registered expansion packs.
-
-## Asset System Details
-
-### AssetManager Integration
-
-The Super Decor API integrates with an enhanced asset management system that provides:
-
-#### Asset Loading
-- **Textures**: Support for all Unity texture formats
-- **Meshes**: 3D models in FBX, OBJ, or Unity mesh format
-- **Materials**: Custom shaders and material properties
-- **Prefabs**: Complete GameObject hierarchies
-
-#### Asset Bundle Creation
-1. Create assets in Unity (same version as Supermarket Simulator)
-2. Mark assets for inclusion in asset bundles
-3. Build bundles for Windows platform
-4. Include bundle files with expansion pack
-
-#### Memory Management
-- Assets are reference-counted for automatic unloading
-- Texture compression reduces memory footprint
-- LOD (Level of Detail) support for complex models
-- Async loading prevents frame drops
-
-### Fallback System
-
-If custom assets fail to load, the API provides fallbacks:
-- Default cube mesh for missing models
-- Standard material for missing shaders
-- Placeholder icon for missing UI sprites
-- Error logging for debugging
-
-## Configuration System
-
-### ConfigurationManager Features
-
-Each expansion pack receives its own configuration file stored in the BepInEx config folder:
-
-#### File Structure
-```
-BepInEx/config/
-├── SupermarketDecor.ExpansionPackId.cfg
-├── SupermarketDecor.AnotherPack.cfg
-└── ...
-```
-
-#### Configuration Sections
-- **General**: Pack-wide settings
-- **Items**: Per-item enable/disable
-- **Visuals**: Graphics quality options
-- **Performance**: LOD and optimization settings
-
-#### Automatic Backup
-- Configs are backed up before major changes
-- Rollback functionality for corrupted configs
-- Export/import for sharing configurations
-
-## Integration with Game Systems
-
-### IDManager Integration
-The API seamlessly integrates with Supermarket Simulator's IDManager:
-- Items are properly registered in the furniture database
-- Localization entries are automatically created
-- Save/load compatibility is maintained
-
-### FurnitureGenerator Compatibility
-Expansion items work with the game's spawning system:
-- Box delivery system recognizes expansion items
-- Inventory management includes expansion items
-- Economic calculations apply to expansion items
-
-### Placement System
-Items use the game's standard placement mechanics:
-- Grid snapping for floor items
-- Wall mounting for decorations
-- Rotation with mouse wheel
-- Height adjustment support
-
-## Best Practices
-
-### Performance Optimization
-1. **Texture Sizes**: Keep textures at reasonable resolutions (512x512 or 1024x1024)
-2. **Polygon Counts**: Aim for under 5000 triangles per decorative item
-3. **Batch Registration**: Register multiple items at once to reduce overhead
-4. **Asset Reuse**: Share materials and textures between similar items
-
-### ID Safety
-The deterministic ID system ensures save file compatibility:
-- Never manually assign furniture IDs
-- Use unique internal names for each item
-- Include pack ID in asset names to prevent conflicts
-
-### Error Handling
-1. Always check return values from API calls
-2. Provide meaningful error messages in logs
-3. Implement graceful degradation for missing assets
-4. Test with various load orders
-
-### Compatibility
-- Target .NET Framework 4.7.2 or compatible
-- Use BepInEx 5.4.21 or newer
-- Reference the base mod as a hard dependency
-- Avoid modifying base game classes directly
-
-## Example Implementation
-
-### Minimal Expansion Pack
-
-```csharp
-[BepInPlugin("com.example.simplefurniture", "Simple Furniture Pack", "1.0.0")]
-[BepInDependency("com.leptoon.supermarketdecomod1", BepInDependency.DependencyFlags.HardDependency)]
-public class SimpleFurniturePack : BaseUnityPlugin
+[BepInPlugin("your.unique.plugin.id", "Your Pack Name", "1.0.0")]
+[BepInDependency(DecorExpansionAPI.BASE_MOD_GUID, BepInDependency.DependencyFlags.HardDependency)]
+public class YourExpansionPack : BaseUnityPlugin
 {
     private void Awake()
     {
-        // Register the expansion pack
-        if (!DecorExpansionAPI.RegisterExpansionPack(
-            "simple_furniture",
-            "Simple Furniture Pack",
-            "1.0.0",
-            "Your Name"))
+        // Check if base mod is ready
+        if (!DecorExpansionAPI.IsBaseModReady())
         {
-            Logger.LogError("Failed to register expansion pack!");
+            Logger.LogError("Super Decor Framework is not loaded!");
             return;
         }
 
-        // Create item data
-        var chair = new DecorItemData
-        {
-            InternalName = "modern_chair",
-            ItemName = "Modern Chair",
-            Description = "A comfortable modern chair",
-            Category = DecorCategory.Furniture,
-            BaseCost = 50f,
-            BoxSize = BoxSize._2x2x2,
-            CollisionSize = new Vector3(0.5f, 1f, 0.5f)
-        };
+        // Register your expansion pack
+        bool registered = DecorExpansionAPI.RegisterExpansionPack(
+            packId: "your.unique.plugin.id",
+            packName: "Your Pack Name",
+            packVersion: "1.0.0",
+            author: "Your Name"
+        );
 
-        // Register the item
-        int chairId = DecorExpansionAPI.RegisterDecorItem("simple_furniture", chair);
-        
-        if (chairId > 0)
+        if (registered)
         {
-            Logger.LogInfo($"Successfully registered Modern Chair with ID: {chairId}");
+            RegisterYourItems();
         }
     }
 }
 ```
 
-### Advanced Features
+## API Reference
 
-For complex expansion packs, the API supports:
-- **Custom Behaviors**: Add MonoBehaviour components to items
-- **Seasonal Items**: Enable/disable based on date
-- **Progressive Unlocking**: Tie items to player level
-- **Item Sets**: Group related items with bonuses
-- **Dynamic Pricing**: Adjust costs based on market conditions
+### Core Methods
 
-## Troubleshooting
+#### RegisterExpansionPack
+Registers your expansion pack with the framework.
+```csharp
+bool RegisterExpansionPack(string packId, string packName, string packVersion, string author = "", string[] dependencies = null)
+```
 
-### Common Issues
+#### RegisterDecorItem
+Registers a new decor item. Returns the assigned furniture ID or -1 on failure.
+```csharp
+int RegisterDecorItem(string packId, DecorItemData itemData)
+```
 
-1. **Items Not Appearing**: Ensure base mod is loaded first via BepInDependency
-2. **ID Conflicts**: Use unique internal names including pack prefix
-3. **Missing Textures**: Verify asset bundle paths are correct
-4. **Performance Issues**: Check polygon counts and texture sizes
-5. **Save Corruption**: Never modify IDs after release
+### DecorItemData Structure
 
-### Debug Tools
+```csharp
+public class DecorItemData
+{
+    // Identity
+    public string InternalName { get; set; }      // Unique identifier within your pack
+    public string ItemName { get; set; }          // Display name
+    public string Description { get; set; }       // Item description
+    public string Category { get; set; }          // Category (not currently used in-game)
 
-The API provides logging methods:
-- `DecorExpansionAPI.LogInfo()`: General information
-- `DecorExpansionAPI.LogWarning()`: Potential issues
-- `DecorExpansionAPI.LogError()`: Critical failures
+    // Economic
+    public float BaseCost { get; set; }           // Purchase price
+    public float DeliveryCost { get; set; }       // Delivery cost
+    public float SellPrice { get; set; }          // Sell back price
 
-Enable verbose logging in the base mod config for detailed diagnostics.
+    // Physical
+    public BoxSize BoxSize { get; set; }          // Box size (must match game's enum)
+    public int BaseReferenceID { get; set; }      // Base furniture to inherit from
 
-## Version Compatibility
+    // Collision
+    public Vector3 CollisionSize { get; set; }    // Collision box size
+    public Vector3 CollisionCenter { get; set; }  // Collision box center offset
+    public bool IsWalkable { get; set; }          // Can player walk through?
 
-### API Version 1.1.0
-- Deterministic ID generation system
-- Enhanced collision detection
-- Improved asset management
-- Backward compatible with 1.0.0 data structures
+    // Visual
+    public Vector3 VisualScale { get; set; }      // Visual scale multiplier
+    public Mesh CustomMesh { get; set; }          // Custom mesh (optional)
+    public Material CustomMaterial { get; set; }  // Custom material (optional)
+    public Texture2D IconTexture { get; set; }    // Icon for UI (optional)
 
-### Future Compatibility
-The API is designed for long-term stability:
-- Semantic versioning for clear upgrade paths
-- Deprecated features maintained for compatibility
-- Migration tools for major version changes
-- Extensive testing before releases
+    // Placement
+    public bool CanPlaceOnFloor { get; set; }     // Can place on floor
+    public bool CanPlaceOnWalls { get; set; }     // Can place on walls
+    public bool RequiresFloorContact { get; set; } // Must touch floor
+    public bool AllowFloating { get; set; }       // Can float in air
 
-## Conclusion
+    // Other properties...
+}
+```
 
-The Super Decor Expansion Pack API provides a robust, safe, and feature-rich platform for extending Supermarket Simulator with custom decorative content. By following the guidelines and best practices outlined in this documentation, developers can create high-quality expansion packs that integrate seamlessly with the base game while maintaining save file compatibility and performance standards.
+### Standard Categories
+
+Use the `DecorCategories` class for standard category strings:
+```csharp
+DecorCategories.Fixtures    // General fixtures and furniture
+DecorCategories.WallDecor   // Wall-mounted decorations
+DecorCategories.FloorDecor  // Floor decorations (plants, rugs, etc.)
+DecorCategories.Lighting    // Lamps and lighting fixtures
+DecorCategories.Outdoor     // Outdoor decorations
+DecorCategories.Seasonal    // Holiday and seasonal items
+```
+
+**Important**: 
+- Categories are for future use only. All items currently appear in Furnitures.
+- Expansion packs must use one of these standard categories. Invalid categories will default to "Fixtures".
+- Custom categories cannot be added by expansion packs.
+
+### BoxSize Values
+Must use the game's BoxSize enum values:
+- `BoxSize._8x8x8` - Small items
+- `BoxSize._15x15x15` - Medium items
+- `BoxSize._25x20x15` - Large items
+- Other sizes as defined in the game
+
+### Base Reference IDs
+Use these constants from DecorFurnitureIDs:
+- `BASE_SMALL_FURNITURE` = 2
+- `BASE_MEDIUM_FURNITURE` = 3
+- `BASE_LARGE_FURNITURE` = 4
+
+## Example: Creating a Simple Item
+
+```csharp
+private void RegisterYourItems()
+{
+    var lampData = new DecorItemData
+    {
+        // Identity
+        InternalName = "modern_lamp",
+        ItemName = "Modern Lamp",
+        Description = "A stylish modern lamp",
+        Category = DecorCategories.Lighting,  // For future use
+
+        // Economics
+        BaseCost = 150f,
+        DeliveryCost = 15f,
+        SellPrice = 105f,
+
+        // Physical properties
+        BoxSize = BoxSize._8x8x8,
+        BaseReferenceID = DecorFurnitureIDs.BASE_SMALL_FURNITURE,
+
+        // Collision
+        CollisionSize = new Vector3(0.4f, 1.0f, 0.4f),
+        CollisionCenter = new Vector3(0f, 0.5f, 0f),
+        IsWalkable = false,
+
+        // Visual
+        VisualScale = new Vector3(0.8f, 0.8f, 0.8f),
+
+        // Placement rules
+        CanPlaceOnFloor = true,
+        CanPlaceOnWalls = false,
+        RequiresFloorContact = true,
+        
+        // Features
+        IsMoveable = true,
+        CanRotate = true,
+        CastShadows = true
+    };
+
+    int lampId = DecorExpansionAPI.RegisterDecorItem("your.unique.plugin.id", lampData);
+    if (lampId > 0)
+    {
+        Logger.LogInfo($"Registered lamp with ID: {lampId}");
+    }
+}
+```
+
+## Custom Assets
+
+### Loading Textures
+```csharp
+// From embedded resources
+var iconTexture = LoadTextureFromResource("YourNamespace.Resources.Icons.lamp_icon.png");
+itemData.IconTexture = iconTexture;
+
+// Helper method
+private Texture2D LoadTextureFromResource(string resourcePath)
+{
+    var assembly = Assembly.GetExecutingAssembly();
+    using (var stream = assembly.GetManifestResourceStream(resourcePath))
+    {
+        if (stream == null) return null;
+        
+        var buffer = new byte[stream.Length];
+        stream.Read(buffer, 0, buffer.Length);
+        
+        var texture = new Texture2D(2, 2);
+        ImageConversion.LoadImage(texture, buffer);
+        return texture;
+    }
+}
+```
+
+### Creating Custom Materials
+```csharp
+var material = new Material(Shader.Find("Standard"));
+material.mainTexture = yourTexture;
+material.SetFloat("_Metallic", 0.1f);
+material.SetFloat("_Smoothness", 0.5f);
+itemData.CustomMaterial = material;
+```
+
+## Best Practices
+
+1. **Unique Internal Names**: Always use unique internal names for your items to avoid conflicts
+2. **Null Checks**: Always check if the base mod is ready before registering
+3. **Error Handling**: Log errors appropriately using your plugin's logger
+4. **Categories**: Assign appropriate categories even though they're not used yet
+5. **Collision Sizes**: Test collision sizes in-game to ensure proper placement
+6. **Icons**: Provide custom icons for better visual identification
+
+## Migration from Old Category System
+
+If you have an existing pack using the old enum-based categories:
+```csharp
+// Old way (deprecated)
+Category = DecorCategory.Lighting
+
+// New way
+Category = DecorCategories.Lighting
+
+// Or use the legacy mapper
+Category = DecorCategories.MapLegacyCategory("lighting")
+```
+
+## Debugging
+
+Use the logging methods provided:
+```csharp
+DecorExpansionAPI.LogInfo("Information message");
+DecorExpansionAPI.LogWarning("Warning message");
+DecorExpansionAPI.LogError("Error message");
+```
+
+## Version History
+
+- **1.2.0**: New flexible category system (categories not yet used in-game)
+- **1.1.0**: Added expansion pack support
+- **1.0.0**: Initial release
