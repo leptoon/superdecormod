@@ -1,7 +1,6 @@
 using BepInEx;
 using BepInEx.Configuration;
 using SupermarketDecorMod1.API;
-using SupermarketDecorMod1.Data;
 using UnityEngine;
 
 namespace BasicDecorPack
@@ -64,7 +63,6 @@ namespace BasicDecorPack
                 Description = "A simple test sculpture",
                 Category = DecorCategories.Fixtures,
                 BaseCost = 100f * PriceMultiplier.Value,
-                DeliveryCost = 15f,
                 BoxSize = BoxSize._8x8x8,
                 BaseReferenceID = 2, // Small furniture base
                 CollisionSize = new Vector3(0.8f, 1.2f, 0.8f),
@@ -85,7 +83,6 @@ namespace BasicDecorPack
                 Description = "A sleek picture frame",
                 Category = DecorCategories.WallDecor,
                 BaseCost = 75f * PriceMultiplier.Value,
-                DeliveryCost = 8f,
                 BoxSize = BoxSize._8x8x8,
                 BaseReferenceID = 2,
                 CollisionSize = new Vector3(0.6f, 0.8f, 0.1f),
@@ -107,7 +104,6 @@ namespace BasicDecorPack
                 Description = "Modern LED lamp",
                 Category = DecorCategories.Lighting,
                 BaseCost = 150f * PriceMultiplier.Value,
-                DeliveryCost = 12f,
                 BoxSize = BoxSize._8x8x8,
                 BaseReferenceID = 2,
                 CollisionSize = new Vector3(0.3f, 0.8f, 0.3f),
@@ -127,7 +123,6 @@ namespace BasicDecorPack
                 Description = "Decorative plant",
                 Category = DecorCategories.FloorDecor,
                 BaseCost = 200f * PriceMultiplier.Value,
-                DeliveryCost = 20f,
                 BoxSize = BoxSize._15x15x15,
                 BaseReferenceID = 3, // Medium furniture base
                 CollisionSize = new Vector3(0.6f, 1.8f, 0.6f),
@@ -147,7 +142,6 @@ namespace BasicDecorPack
                 Description = "Modern art piece",
                 Category = DecorCategories.WallDecor,
                 BaseCost = 125f * PriceMultiplier.Value,
-                DeliveryCost = 10f,
                 BoxSize = BoxSize._8x8x8,
                 BaseReferenceID = 2,
                 CollisionSize = new Vector3(1.0f, 0.8f, 0.1f),
@@ -169,7 +163,6 @@ namespace BasicDecorPack
                 Description = "Large sculptural piece",
                 Category = DecorCategories.Fixtures,
                 BaseCost = 300f * PriceMultiplier.Value,
-                DeliveryCost = 25f,
                 BoxSize = BoxSize._15x15x15,
                 BaseReferenceID = 3,
                 CollisionSize = new Vector3(1.0f, 1.6f, 1.0f),
