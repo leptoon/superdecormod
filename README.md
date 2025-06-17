@@ -4,11 +4,11 @@ A comprehensive modular decoration system for Supermarket Simulator that adds no
 
 ## Overview
 
-This mod introduces a variety of decorative items to Supermarket Simulator, allowing players to create more personalized and realistic looking stores. All items are purely aesthetic and do not affect gameplay mechanics.
+This mod a framework to import decorative items into Supermarket Simulator, allowing creators to distribute their 3D assets for Supermarket Simulator and players to create more personalized stores.
 
 Some decor objects may have animations and lighting in the near future, but for now I'm just focusing on static objects for the initial release.
 
-The mod uses my own custom decor placement system, entirely separate from all other objects in the game and designed to be expandable for feature improvements.
+The mod uses a custom placement system, separate from all other objects in the game and designed to be expandable for feature improvements.
 
 There are some notable differences between the default placement system and my custom placement system.
 1. There are no dotted white borders. This border would be distracting while you're trying to be creative, especially if you have a lot of decor items and they each have their own border.
@@ -27,7 +27,7 @@ There are some notable differences between the default placement system and my c
 
 1. Install Tobey's BepInEx x MelonLoader Pack
 2. Download the base mod and any desired expansion packs
-3. Place the mod DLL(s) in your BepInEx/plugins folder
+3. Place the mod DLLs in your BepInEx/plugins folder. The base mod contains no items, you need at least one expansion.
 4. Launch the game
 
 ## Available Decoration Packs
