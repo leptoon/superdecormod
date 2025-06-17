@@ -9,7 +9,7 @@ namespace BasicDecorPack
     /// Basic Decor Pack - Example expansion pack that registers items with the framework
     /// </summary>
     [BepInPlugin("com.leptoon.basicdecorpack", "Basic Decor Pack", "1.0.0")]
-    [BepInDependency("com.leptoon.supermarketdecomod1", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency("com.leptoon.supermarketdecormod1", BepInDependency.DependencyFlags.HardDependency)]
     public class BasicDecorPackPlugin : BaseUnityPlugin
     {
         // Configuration
