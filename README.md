@@ -1,6 +1,7 @@
 # Super Decor - A Supermarket Simulator Decor Mod
 
 A comprehensive modular decoration system for Supermarket Simulator that adds non-functional decorative items to enhance store aesthetics and atmosphere.
+
 https://www.nexusmods.com/supermarketsimulator/mods/1225
 
 ## Overview
