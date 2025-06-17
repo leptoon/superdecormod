@@ -1,6 +1,7 @@
 # Super Decor - A Supermarket Simulator Decor Mod
 
 A comprehensive modular decoration system for Supermarket Simulator that adds non-functional decorative items to enhance store aesthetics and atmosphere.
+https://www.nexusmods.com/supermarketsimulator/mods/1225
 
 ## Overview
 
@@ -14,6 +15,7 @@ There are some notable differences between the default placement system and my c
 1. There are no dotted white borders. This border would be distracting while you're trying to be creative, especially if you have a lot of decor items and they each have their own border.
 2. There are no red and green placement permission indicators. These indicators are helpful for normal furniture but they entirely mask the object texture so having them would hinder creativity. Instead, I've opted to allow full clipping of decor objects rather than attempting to restrict them.
 3. Precision height and rotation controls.
+
 ### Key Features
 
 - Base mod with modular content packs
@@ -61,8 +63,6 @@ SOFTWARE.
 ## Support
 
 For bug reports and feature requests, please leave a comment on the Nexus mod page or send me a message.
-
-Special thanks to AI, this mod wouldn't have been possible without Claude Opus 4 and GPT 4.1.
 
 ---
 
