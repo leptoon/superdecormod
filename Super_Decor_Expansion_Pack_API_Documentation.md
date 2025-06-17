@@ -28,6 +28,7 @@ The Super Decor Expansion API enables mod developers to create expansion packs t
 
 ### Important Notes
 - **Categories are not currently used**: While the API supports categorization, all items currently appear in the Furnitures page regardless of their assigned category. Categories are implemented for future use when a custom decor UI might be added.
+- **Placement parameters are not implemented**: The `CanPlaceOnFloor`, `CanPlaceOnWalls`, `CanPlaceOnCeiling`, `RequiresFloorContact`, and `AllowFloating` parameters are included in the API for future use but are not currently functional. All placement rules are inherited from the `BaseReferenceID` furniture.
 - The base framework (`com.leptoon.supermarketdecormod1`) must be installed for expansion packs to work
 - All expansion pack items are assigned IDs in the range 760000-999999
 - Items must reference a valid base furniture ID to inherit default behaviors
