@@ -16,8 +16,8 @@ namespace SupermarketDecorMod1.API
     public static class DecorExpansionAPI
     {
         // Version of the API
-        public const string API_VERSION = "1.2.1"; // Updated for new category system
-        public const string BASE_MOD_GUID = "com.leptoon.supermarketdecomod1";
+        public const string API_VERSION = "1.2.0"; // Updated for new category system
+        public const string BASE_MOD_GUID = "com.leptoon.supermarketdecormod1";
 
         private static Dictionary<string, ExpansionPackInfo> registeredPacks = new Dictionary<string, ExpansionPackInfo>();
         private static Dictionary<int, DecorItemData> registeredItems = new Dictionary<int, DecorItemData>();
@@ -530,11 +530,11 @@ namespace SupermarketDecorMod1.API
         public Texture2D IconTexture { get; set; }
 
         // Placement
-        public bool CanPlaceOnFloor { get; set; } = true;
-        public bool CanPlaceOnWalls { get; set; } = false;
-        public bool CanPlaceOnCeiling { get; set; } = false;
-        public bool RequiresFloorContact { get; set; } = true;
-        public bool AllowFloating { get; set; } = false;
+        public bool CanPlaceOnFloor { get; set; } = true;      // NOT IMPLEMENTED - Reserved for future use
+        public bool CanPlaceOnWalls { get; set; } = false;     // NOT IMPLEMENTED - Reserved for future use
+        public bool CanPlaceOnCeiling { get; set; } = false;   // NOT IMPLEMENTED - Reserved for future use
+        public bool RequiresFloorContact { get; set; } = true; // NOT IMPLEMENTED - Reserved for future use
+        public bool AllowFloating { get; set; } = false;       // NOT IMPLEMENTED - Reserved for future use
 
         // Interaction
         public bool IsInteractable { get; set; } = false;
