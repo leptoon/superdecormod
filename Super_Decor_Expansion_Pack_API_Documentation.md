@@ -226,20 +226,6 @@ itemData.CustomMaterial = material;
 5. **Collision Sizes**: Test collision sizes in-game to ensure proper placement
 6. **Icons**: Provide custom icons for better visual identification
 
-## Migration from Old Category System
-
-If you have an existing pack using the old enum-based categories:
-```csharp
-// Old way (deprecated)
-Category = DecorCategory.Lighting
-
-// New way
-Category = DecorCategories.Lighting
-
-// Or use the legacy mapper
-Category = DecorCategories.MapLegacyCategory("lighting")
-```
-
 ## Debugging
 
 Use the logging methods provided:
