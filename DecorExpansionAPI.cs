@@ -16,7 +16,7 @@ namespace SupermarketDecorMod1.API
     public static class DecorExpansionAPI
     {
         // Version of the API
-        public const string API_VERSION = "1.2.0"; // Updated for new category system
+        public const string API_VERSION = "1.2.1"; // Updated for new category system
         public const string BASE_MOD_GUID = "com.leptoon.supermarketdecomod1";
 
         private static Dictionary<string, ExpansionPackInfo> registeredPacks = new Dictionary<string, ExpansionPackInfo>();
