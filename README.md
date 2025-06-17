@@ -4,7 +4,7 @@ A comprehensive modular decoration system for Supermarket Simulator that adds no
 
 ## Overview
 
-This mod a framework to import decorative items into Supermarket Simulator, allowing creators to distribute their 3D assets for Supermarket Simulator and players to create more personalized stores.
+This mod is a framework to import decorative items into Supermarket Simulator, allowing creators to distribute their 3D assets for Supermarket Simulator and players to create more personalized stores.
 
 Some decor objects may have animations and lighting in the near future, but for now I'm just focusing on static objects for the initial release.
 
