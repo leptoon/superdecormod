@@ -1,602 +1,234 @@
-﻿using System;
+using BepInEx;
+using BepInEx.Configuration;
+using BepInEx.Logging;
+using SupermarketDecorMod1.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
-using BepInEx;
-using HarmonyLib;
-using MyBox;
-using SupermarketDecorMod1.Data;
-using SupermarketDecorMod1.Utilities;
-using SupermarketDecorMod1.Components;
-using SupermarketDecorMod1.Configuration;
 using System.Security.Cryptography;
 using System.Text;
+using UnityEngine;
 
 namespace SupermarketDecorMod1.API
 {
     /// <summary>
-    /// Public API for expansion packs to interact with the base Decor Mod
-    /// This provides a stable interface that expansion packs can rely on
+    /// Public API for Super Decor expansion packs
     /// </summary>
     public static class DecorExpansionAPI
     {
-        // Version of the API - increment when making breaking changes
-        public const string API_VERSION = "1.1.0"; // Updated for deterministic IDs
+        // Version of the API
+        public const string API_VERSION = "1.2.0"; // Updated for new category system
         public const string BASE_MOD_GUID = "com.leptoon.supermarketdecomod1";
 
-        // Registry for expansion packs
-        private static readonly Dictionary<string, ExpansionPackInfo> registeredExpansions = new Dictionary<string, ExpansionPackInfo>();
+        private static Dictionary<string, ExpansionPackInfo> registeredPacks = new Dictionary<string, ExpansionPackInfo>();
+        private static Dictionary<int, DecorItemData> registeredItems = new Dictionary<int, DecorItemData>();
+        private static Dictionary<string, List<DecorItemData>> expansionItems = new Dictionary<string, List<DecorItemData>>();
+        private static Dictionary<string, List<DecorItemData>> pendingItems = new Dictionary<string, List<DecorItemData>>();
+        private static Dictionary<string, int> internalNameToId = new Dictionary<string, int>();
+        private static HashSet<int> usedIds = new HashSet<int>();
+        private static Dictionary<string, System.Reflection.Assembly> packAssemblies = new Dictionary<string, System.Reflection.Assembly>();
 
-        // Item registry by expansion pack
-        private static readonly Dictionary<string, List<DecorItemData>> expansionItems = new Dictionary<string, List<DecorItemData>>();
+        private static ManualLogSource logger;
+        private static bool isInitialized = false;
 
-        // Internal name to ID mapping - now includes pack ID for uniqueness
-        private static readonly Dictionary<string, int> internalNameToId = new Dictionary<string, int>();
-
-        // Track used IDs to handle collisions
-        private static readonly HashSet<int> usedIds = new HashSet<int>();
-
-        // Pending items waiting for IDManager initialization
-        private static readonly Dictionary<string, List<DecorItemData>> pendingItems = new Dictionary<string, List<DecorItemData>>();
-
-        // Flag to track if we've initialized with IDManager
-        private static bool isIDManagerInitialized = false;
-
-        #region Deterministic ID Generation
+        // ID range for expansion pack items (760000-999999)
+        private const int EXPANSION_ID_START = 760000;
+        private const int EXPANSION_ID_END = 999999;
 
         /// <summary>
-        /// Generate a deterministic ID based on pack ID and item internal name
-        /// This ensures the same item always gets the same ID
+        /// Initialize the API (called by main mod)
         /// </summary>
-        private static int GenerateDeterministicId(string packId, string itemInternalName)
+        internal static void Initialize(ManualLogSource modLogger)
         {
-            // Combine pack ID and item name for unique identifier
-            string uniqueIdentifier = $"{packId}:{itemInternalName}";
+            logger = modLogger;
+            isInitialized = true;
 
-            using (var md5 = MD5.Create())
-            {
-                byte[] hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(uniqueIdentifier));
-
-                // Convert first 4 bytes to int
-                int hash = BitConverter.ToInt32(hashBytes, 0);
-
-                // Map to expansion ID range (760000-999999)
-                int rangeSize = 999999 - 760000;
-                int baseId = 760000 + Math.Abs(hash % rangeSize);
-
-                // Handle collisions by incrementing
-                int finalId = baseId;
-                int attempts = 0;
-                while (usedIds.Contains(finalId) && attempts < 1000)
-                {
-                    finalId = 760000 + Math.Abs((hash + attempts) % rangeSize);
-                    attempts++;
-                }
-
-                if (attempts >= 1000)
-                {
-                    LogError($"Could not find available ID for {uniqueIdentifier} after 1000 attempts");
-                    return -1;
-                }
-
-                return finalId;
-            }
+            logger.LogInfo("DecorExpansionAPI initialized");
         }
 
-        #endregion
-
-        #region Expansion Pack Registration
+        /// <summary>
+        /// Check if the base mod is ready
+        /// </summary>
+        public static bool IsBaseModReady()
+        {
+            return isInitialized && DecorMod1Plugin.Instance != null;
+        }
 
         /// <summary>
-        /// Register an expansion pack with the base mod
+        /// Register an expansion pack
         /// </summary>
+        /// <param name="packId">Unique identifier for the pack</param>
+        /// <param name="packName">Display name of the pack</param>
+        /// <param name="packVersion">Version of the pack</param>
+        /// <param name="author">Author of the pack</param>
+        /// <param name="dependencies">Optional dependencies on other packs</param>
+        /// <returns>True if registration successful</returns>
         public static bool RegisterExpansionPack(string packId, string packName, string packVersion, string author = "", string[] dependencies = null)
         {
-            try
+            if (!isInitialized)
             {
-                if (string.IsNullOrEmpty(packId))
-                {
-                    LogError("Cannot register expansion pack with empty ID");
-                    return false;
-                }
-
-                if (registeredExpansions.ContainsKey(packId))
-                {
-                    LogWarning($"Expansion pack '{packId}' is already registered");
-                    return false;
-                }
-
-                // Check if base mod is loaded
-                if (!IsBaseModReady())
-                {
-                    LogError($"Base mod not ready - cannot register expansion pack '{packId}'");
-                    return false;
-                }
-
-                var packInfo = new ExpansionPackInfo
-                {
-                    PackId = packId,
-                    PackName = packName,
-                    PackVersion = packVersion,
-                    Author = author,
-                    Dependencies = dependencies ?? new string[0],
-                    IsEnabled = true,
-                    RegisteredItems = new List<int>()
-                };
-
-                registeredExpansions[packId] = packInfo;
-                expansionItems[packId] = new List<DecorItemData>();
-                pendingItems[packId] = new List<DecorItemData>();
-
-                // Initialize configuration for this pack
-                ConfigurationManager.InitializeExpansionConfig(packId);
-
-                LogInfo($"Expansion pack registered: {packName} [{packId}]");
-
-                // Notify the base mod about the new expansion
-                DecorMod1Plugin.Instance?.OnExpansionPackRegistered(packInfo);
-
-                // Try to process any pending items if IDManager is ready
-                TryProcessPendingItems();
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                LogError($"Failed to register expansion pack '{packId}': {ex.Message}");
+                LogError("API not initialized! Is Super Decor mod loaded?");
                 return false;
             }
-        }
 
-        /// <summary>
-        /// Check if an expansion pack is registered
-        /// </summary>
-        public static bool IsExpansionPackRegistered(string packId)
-        {
-            return registeredExpansions.ContainsKey(packId);
-        }
-
-        /// <summary>
-        /// Check if all dependencies are satisfied for an expansion pack
-        /// </summary>
-        public static bool CheckDependencies(string packId)
-        {
-            if (!registeredExpansions.TryGetValue(packId, out var packInfo))
-                return false;
-
-            foreach (var dependency in packInfo.Dependencies)
+            if (string.IsNullOrEmpty(packId))
             {
-                if (!IsExpansionPackRegistered(dependency))
-                {
-                    LogError($"Missing dependency '{dependency}' for pack '{packId}'");
-                    return false;
-                }
+                LogError("Pack ID cannot be null or empty!");
+                return false;
             }
+
+            if (registeredPacks.ContainsKey(packId))
+            {
+                LogError($"Pack '{packId}' is already registered!");
+                return false;
+            }
+
+            var packInfo = new ExpansionPackInfo
+            {
+                PackId = packId,
+                PackName = packName,
+                Version = packVersion,
+                Author = author,
+                Dependencies = dependencies ?? new string[0],
+                RegisteredItems = new List<int>()
+            };
+
+            registeredPacks[packId] = packInfo;
+            expansionItems[packId] = new List<DecorItemData>();
+            pendingItems[packId] = new List<DecorItemData>();
+
+            LogInfo($"Registered expansion pack: {packName} v{packVersion} by {author}");
+
+            // Try to process any pending items if IDManager is ready
+            TryProcessPendingItems();
 
             return true;
         }
 
-        #endregion
+        /// <summary>
+        /// Register an expansion pack with assembly reference
+        /// </summary>
+        public static bool RegisterExpansionPackWithAssembly(string packId, string packName, string packVersion, string author, System.Reflection.Assembly assembly, string[] dependencies = null)
+        {
+            // First register normally
+            bool result = RegisterExpansionPack(packId, packName, packVersion, author, dependencies);
 
-        #region Item Registration
+            if (result && assembly != null)
+            {
+                packAssemblies[packId] = assembly;
+                LogInfo($"Registered assembly for pack {packId}");
+
+                // Pass to ExpansionAssetLoader
+                Utilities.ExpansionAssetLoader.RegisterPackAssembly(packId, assembly);
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Register a decor item from an expansion pack
         /// </summary>
+        /// <param name="packId">ID of the expansion pack</param>
+        /// <param name="itemData">Item data to register</param>
+        /// <returns>Furniture ID if successful, -1 if failed</returns>
         public static int RegisterDecorItem(string packId, DecorItemData itemData)
         {
-            try
+            if (!isInitialized)
             {
-                if (!IsExpansionPackRegistered(packId))
-                {
-                    LogError($"Cannot register item - expansion pack '{packId}' not registered");
-                    return -1;
-                }
-
-                if (!registeredExpansions[packId].IsEnabled)
-                {
-                    LogWarning($"Expansion pack '{packId}' is disabled");
-                    return -1;
-                }
-
-                if (!CheckDependencies(packId))
-                {
-                    LogError($"Cannot register item - dependencies not satisfied for pack '{packId}'");
-                    return -1;
-                }
-
-                // Validate item data
-                if (itemData == null)
-                {
-                    LogError("Cannot register null item data");
-                    return -1;
-                }
-
-                if (string.IsNullOrEmpty(itemData.InternalName))
-                {
-                    LogError("Item must have an internal name");
-                    return -1;
-                }
-
-                // Create unique key that includes pack ID
-                string itemKey = $"{packId}:{itemData.InternalName}";
-
-                // Check if this exact item was already registered
-                if (internalNameToId.ContainsKey(itemKey))
-                {
-                    LogWarning($"Item '{itemData.InternalName}' from pack '{packId}' is already registered");
-                    return internalNameToId[itemKey];
-                }
-
-                // Generate deterministic ID
-                int assignedId = GenerateDeterministicId(packId, itemData.InternalName);
-                if (assignedId == -1)
-                {
-                    LogError($"Failed to generate ID for item '{itemData.InternalName}'");
-                    return -1;
-                }
-
-                // Reserve the ID
-                usedIds.Add(assignedId);
-                itemData.FurnitureID = assignedId;
-
-                // Track the internal name immediately with pack-specific key
-                internalNameToId[itemKey] = assignedId;
-
-                // Add to pending items if IDManager is not ready
-                if (!IsIDManagerReady())
-                {
-                    pendingItems[packId].Add(itemData);
-                    LogInfo($"Item '{itemData.ItemName}' queued for registration (ID: {assignedId})");
-                    return assignedId;
-                }
-
-                // Register the item immediately if IDManager is ready
-                bool success = RegisterItemInternal(itemData, packId);
-
-                if (success)
-                {
-                    // Track this item
-                    registeredExpansions[packId].RegisteredItems.Add(assignedId);
-                    expansionItems[packId].Add(itemData);
-
-                    LogInfo($"Registered item '{itemData.ItemName}' (ID: {assignedId}) from pack '{packId}'");
-                    return assignedId;
-                }
-
-                // If registration failed, remove the reserved ID
-                usedIds.Remove(assignedId);
-                internalNameToId.Remove(itemKey);
-
+                LogError("API not initialized! Is Super Decor mod loaded?");
                 return -1;
             }
-            catch (Exception ex)
+
+            if (!registeredPacks.ContainsKey(packId))
             {
-                LogError($"Failed to register decor item: {ex.Message}");
+                LogError($"Pack '{packId}' is not registered!");
                 return -1;
             }
-        }
 
-        /// <summary>
-        /// Register multiple items at once
-        /// </summary>
-        public static List<int> RegisterDecorItems(string packId, List<DecorItemData> items)
-        {
-            var registeredIds = new List<int>();
-
-            foreach (var item in items)
+            if (itemData == null)
             {
-                int id = RegisterDecorItem(packId, item);
-                if (id > 0)
+                LogError("Item data cannot be null!");
+                return -1;
+            }
+
+            if (string.IsNullOrEmpty(itemData.InternalName))
+            {
+                LogError("Item internal name cannot be null or empty!");
+                return -1;
+            }
+
+            // Validate or use default category (NOTE: Not currently used in-game)
+            if (!string.IsNullOrEmpty(itemData.Category))
+            {
+                // Validate category is a standard category
+                if (!DecorCategories.IsStandardCategory(itemData.Category))
                 {
-                    registeredIds.Add(id);
+                    LogWarning($"Invalid category '{itemData.Category}' for item '{itemData.InternalName}'. Using default category 'Fixtures'.");
+                    itemData.Category = DecorCategories.Fixtures;
                 }
             }
-
-            return registeredIds;
-        }
-
-        /// <summary>
-        /// Get an item by internal name (updated to search by pack-specific key)
-        /// </summary>
-        public static DecorItemData GetDecorItem(string internalName)
-        {
-            // First try to find by global internal name (backward compatibility)
-            foreach (var packId in expansionItems.Keys)
+            else
             {
-                string itemKey = $"{packId}:{internalName}";
-                if (internalNameToId.TryGetValue(itemKey, out int id))
+                // Default to Fixtures if no category specified
+                itemData.Category = DecorCategories.Fixtures;
+            }
+
+            // Generate deterministic ID based on pack ID and item internal name
+            int furnitureId = GenerateDeterministicId(packId, itemData.InternalName);
+
+            // Check for ID collision
+            if (registeredItems.ContainsKey(furnitureId))
+            {
+                LogError($"ID collision detected for item '{itemData.InternalName}' in pack '{packId}'!");
+                // Try alternative IDs
+                for (int i = 1; i < 100; i++)
                 {
-                    var item = expansionItems[packId].FirstOrDefault(i => i.FurnitureID == id);
-                    if (item != null)
-                        return item;
-
-                    // Check pending items too
-                    item = pendingItems[packId].FirstOrDefault(i => i.FurnitureID == id);
-                    if (item != null)
-                        return item;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Get an item by pack ID and internal name
-        /// </summary>
-        public static DecorItemData GetDecorItem(string packId, string internalName)
-        {
-            string itemKey = $"{packId}:{internalName}";
-
-            if (!internalNameToId.TryGetValue(itemKey, out int id))
-                return null;
-
-            if (expansionItems.TryGetValue(packId, out var packItems))
-            {
-                var item = packItems.FirstOrDefault(i => i.FurnitureID == id);
-                if (item != null)
-                    return item;
-            }
-
-            // Check pending items too
-            if (pendingItems.TryGetValue(packId, out var pendingPackItems))
-            {
-                var item = pendingPackItems.FirstOrDefault(i => i.FurnitureID == id);
-                if (item != null)
-                    return item;
-            }
-
-            return null;
-        }
-
-        #endregion
-
-        #region Asset Management
-
-        /// <summary>
-        /// Register custom assets for an expansion pack
-        /// </summary>
-        public static bool RegisterAssets(string packId, string assetBundlePath)
-        {
-            try
-            {
-                if (!IsExpansionPackRegistered(packId))
-                {
-                    LogError($"Cannot register assets - expansion pack '{packId}' not registered");
-                    return false;
-                }
-
-                // Load the asset bundle
-                var assetBundle = AssetBundle.LoadFromFile(assetBundlePath);
-                if (assetBundle == null)
-                {
-                    LogError($"Failed to load asset bundle from: {assetBundlePath}");
-                    return false;
-                }
-
-                // Store the asset bundle reference
-                AssetManager.RegisterExpansionAssets(packId, assetBundle);
-
-                LogInfo($"Registered asset bundle for pack '{packId}'");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                LogError($"Failed to register assets: {ex.Message}");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Register an asset bundle directly
-        /// </summary>
-        public static void RegisterAssetBundle(string packId, AssetBundle bundle)
-        {
-            if (!registeredExpansions.ContainsKey(packId))
-            {
-                LogError($"Expansion pack '{packId}' is not registered");
-                return;
-            }
-
-            AssetManager.RegisterExpansionAssets(packId, bundle);
-            LogInfo($"Registered asset bundle for pack '{packId}'");
-        }
-
-        /// <summary>
-        /// Load a texture asset from an expansion pack
-        /// </summary>
-        public static Texture2D LoadTexture(string packId, string textureName)
-        {
-            return AssetManager.LoadExpansionTexture(packId, textureName);
-        }
-
-        /// <summary>
-        /// Load a mesh asset from an expansion pack
-        /// </summary>
-        public static Mesh LoadMesh(string packId, string meshName)
-        {
-            return AssetManager.LoadExpansionMesh(packId, meshName);
-        }
-
-        /// <summary>
-        /// Load an asset from an expansion pack's bundle
-        /// </summary>
-        public static T LoadAsset<T>(string packId, string assetName) where T : UnityEngine.Object
-        {
-            try
-            {
-                var assetBundle = AssetManager.GetExpansionAssetBundle(packId);
-                if (assetBundle == null)
-                {
-                    LogError($"No asset bundle found for pack: {packId}");
-                    return null;
-                }
-
-                return assetBundle.LoadAsset<T>(assetName);
-            }
-            catch (Exception ex)
-            {
-                LogError($"Failed to load asset '{assetName}' from pack '{packId}': {ex.Message}");
-                return null;
-            }
-        }
-
-        #endregion
-
-        #region Spawning and Placement
-
-        /// <summary>
-        /// Spawn a decor item in the world
-        /// </summary>
-        public static GameObject SpawnDecorItem(string internalName, Vector3 position, Quaternion rotation)
-        {
-            try
-            {
-                var itemData = GetDecorItem(internalName);
-                if (itemData == null)
-                {
-                    LogError($"Item '{internalName}' not found");
-                    return null;
-                }
-
-                return SpawnDecorItem(itemData.FurnitureID, position, rotation);
-            }
-            catch (Exception ex)
-            {
-                LogError($"Failed to spawn decor item '{internalName}': {ex.Message}");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Spawn a decor item by ID
-        /// </summary>
-        public static GameObject SpawnDecorItem(int furnitureId, Vector3 position, Quaternion rotation)
-        {
-            try
-            {
-                if (!IsIDManagerReady())
-                {
-                    LogError("Cannot spawn item - IDManager not ready");
-                    return null;
-                }
-
-                var furnitureGenerator = Singleton<FurnitureGenerator>.Instance;
-                if (furnitureGenerator == null)
-                {
-                    LogError("FurnitureGenerator not found");
-                    return null;
-                }
-
-                var furniture = furnitureGenerator.SpawnFurniture(furnitureId, position);
-                if (furniture != null)
-                {
-                    furniture.transform.rotation = rotation;
-                }
-
-                return furniture;
-            }
-            catch (Exception ex)
-            {
-                LogError($"Failed to spawn decor item ID {furnitureId}: {ex.Message}");
-                return null;
-            }
-        }
-
-        #endregion
-
-        #region Configuration
-
-        /// <summary>
-        /// Get configuration value for an expansion pack
-        /// </summary>
-        public static T GetConfig<T>(string packId, string key, T defaultValue)
-        {
-            return ConfigurationManager.GetExpansionConfig(packId, key, defaultValue);
-        }
-
-        /// <summary>
-        /// Set configuration value for an expansion pack
-        /// </summary>
-        public static void SetConfig<T>(string packId, string key, T value)
-        {
-            ConfigurationManager.SetExpansionConfig(packId, key, value);
-        }
-
-        #endregion
-
-        #region Utility Methods
-
-        /// <summary>
-        /// Get all registered expansion packs
-        /// </summary>
-        public static Dictionary<string, ExpansionPackInfo> GetRegisteredExpansionPacks()
-        {
-            return new Dictionary<string, ExpansionPackInfo>(registeredExpansions);
-        }
-
-        /// <summary>
-        /// Get items registered by a specific expansion pack
-        /// </summary>
-        public static List<DecorItemData> GetExpansionPackItems(string packId)
-        {
-            if (expansionItems.TryGetValue(packId, out var items))
-            {
-                return new List<DecorItemData>(items);
-            }
-            return new List<DecorItemData>();
-        }
-
-        /// <summary>
-        /// Check if the base mod is initialized and ready
-        /// </summary>
-        public static bool IsBaseModReady()
-        {
-            return DecorMod1Plugin.Instance != null && DecorMod1Plugin.Instance.IsInitialized;
-        }
-
-        /// <summary>
-        /// Get the API version
-        /// </summary>
-        public static string GetAPIVersion()
-        {
-            return API_VERSION;
-        }
-
-        /// <summary>
-        /// Check if an item ID belongs to expansion content
-        /// </summary>
-        public static bool IsExpansionItem(int furnitureId)
-        {
-            return furnitureId >= 760000 && furnitureId <= 999999;
-        }
-
-        /// <summary>
-        /// Validate all registered items have unique IDs
-        /// </summary>
-        public static bool ValidateItemIds()
-        {
-            var idCheck = new HashSet<int>();
-
-            foreach (var pack in expansionItems)
-            {
-                foreach (var item in pack.Value)
-                {
-                    if (idCheck.Contains(item.FurnitureID))
+                    int altId = GenerateDeterministicId(packId, itemData.InternalName + "_" + i);
+                    if (!registeredItems.ContainsKey(altId))
                     {
-                        LogError($"Duplicate ID detected: {item.FurnitureID} in pack {pack.Key}");
-                        return false;
+                        furnitureId = altId;
+                        LogWarning($"Using alternative ID {altId} for item '{itemData.InternalName}'");
+                        break;
                     }
-                    idCheck.Add(item.FurnitureID);
                 }
             }
 
-            return true;
+            // Set the furniture ID
+            itemData.FurnitureID = furnitureId;
+
+            // Validate box size
+            if (!Enum.IsDefined(typeof(BoxSize), itemData.BoxSize))
+            {
+                LogWarning($"Invalid BoxSize for item '{itemData.InternalName}', defaulting to _8x8x8");
+                itemData.BoxSize = BoxSize._8x8x8;
+            }
+
+            // Register the item
+            registeredItems[furnitureId] = itemData;
+            expansionItems[packId].Add(itemData);
+            registeredPacks[packId].RegisteredItems.Add(furnitureId);
+
+            // Track the internal name
+            string itemKey = $"{packId}:{itemData.InternalName}";
+            internalNameToId[itemKey] = furnitureId;
+            usedIds.Add(furnitureId);
+
+            // Add to pending items if IDManager is not ready
+            if (!IsIDManagerReady())
+            {
+                pendingItems[packId].Add(itemData);
+                LogInfo($"Item '{itemData.ItemName}' queued for registration (ID: {furnitureId}, Category: {itemData.Category})");
+            }
+            else
+            {
+                // Process immediately if ready
+                TryProcessPendingItems();
+            }
+
+            LogInfo($"Registered item '{itemData.ItemName}' with ID {furnitureId} from pack '{packId}' in category '{itemData.Category}'");
+
+            return furnitureId;
         }
-
-        #endregion
-
-        #region Internal Methods
 
         /// <summary>
         /// Check if IDManager is ready
@@ -605,7 +237,7 @@ namespace SupermarketDecorMod1.API
         {
             try
             {
-                var idManager = Singleton<IDManager>.Instance;
+                var idManager = MyBox.Singleton<IDManager>.Instance;
                 return idManager != null && idManager.Furnitures != null;
             }
             catch
@@ -615,415 +247,233 @@ namespace SupermarketDecorMod1.API
         }
 
         /// <summary>
-        /// Try to process pending items if IDManager is ready
+        /// Try to process pending items
         /// </summary>
-        internal static void TryProcessPendingItems()
+        public static void TryProcessPendingItems()
         {
             if (!IsIDManagerReady())
                 return;
 
-            if (isIDManagerInitialized)
-                return;
-
-            isIDManagerInitialized = true;
-            LogInfo("IDManager is ready - processing pending items");
-
             foreach (var packId in pendingItems.Keys.ToList())
             {
                 var items = pendingItems[packId].ToList();
-                pendingItems[packId].Clear();
-
                 foreach (var item in items)
                 {
-                    bool success = RegisterItemInternal(item, packId);
-                    if (success)
-                    {
-                        registeredExpansions[packId].RegisteredItems.Add(item.FurnitureID);
-                        expansionItems[packId].Add(item);
-                        LogInfo($"Successfully registered pending item '{item.ItemName}' (ID: {item.FurnitureID})");
-                    }
-                    else
-                    {
-                        LogError($"Failed to register pending item '{item.ItemName}'");
-                        // Remove the failed ID reservation
-                        usedIds.Remove(item.FurnitureID);
-                        string itemKey = $"{packId}:{item.InternalName}";
-                        internalNameToId.Remove(itemKey);
-                    }
+                    // The DecorPatches will handle the actual integration
+                    LogInfo($"Item '{item.ItemName}' ready for IDManager integration");
                 }
+                pendingItems[packId].Clear();
             }
 
-            // Validate all IDs after processing
-            ValidateItemIds();
-        }
-
-        /// <summary>
-        /// Internal method to register item with the game
-        /// </summary>
-        internal static bool RegisterItemInternal(DecorItemData itemData, string packId)
-        {
+            // Trigger UI refresh if FurnituresViewer exists
             try
             {
-                var idManager = Singleton<IDManager>.Instance;
-                var localizationManager = Singleton<LocalizationManager>.Instance;
-
-                if (idManager == null)
+                var furnituresViewer = UnityEngine.Object.FindObjectOfType<FurnituresViewer>();
+                if (furnituresViewer != null)
                 {
-                    LogError("IDManager not available for internal registration");
-                    return false;
+                    // The viewer will be refreshed when opened
+                    LogInfo("FurnituresViewer found - items will appear when computer is opened");
                 }
-
-                // Create the furniture scriptable object
-                var furnitureSO = CreateFurnitureSO(itemData, packId);
-                if (furnitureSO == null)
-                {
-                    LogError("Failed to create FurnitureSO");
-                    return false;
-                }
-
-                // Register with IDManager
-                var traverse = Traverse.Create(idManager);
-                var furnitureList = traverse.Field("m_Furnitures").GetValue<List<FurnitureSO>>();
-
-                if (furnitureList == null)
-                {
-                    LogError("Cannot access furniture list");
-                    return false;
-                }
-
-                furnitureList.Add(furnitureSO);
-
-                // Add localization
-                if (localizationManager != null)
-                {
-                    var localizationTraverse = Traverse.Create(localizationManager);
-                    var localizedNames = localizationTraverse.Field("m_LocalizedFurnitureNames").GetValue<Dictionary<int, string>>();
-                    if (localizedNames != null)
-                    {
-                        localizedNames[itemData.FurnitureID] = itemData.ItemName;
-                    }
-                }
-
-                return true;
             }
             catch (Exception ex)
             {
-                LogError($"Failed to register item internally: {ex.Message}");
+                LogError($"Error checking for FurnituresViewer: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Check if an ID is an expansion item
+        /// </summary>
+        public static bool IsExpansionItem(int id)
+        {
+            return id >= EXPANSION_ID_START && id <= EXPANSION_ID_END;
+        }
+
+        /// <summary>
+        /// Generate a deterministic ID for an item
+        /// </summary>
+        private static int GenerateDeterministicId(string packId, string itemName)
+        {
+            string combined = $"{packId}:{itemName}";
+            using (var sha256 = SHA256.Create())
+            {
+                byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(combined));
+
+                // Use first 4 bytes of hash for number generation
+                uint hashValue = BitConverter.ToUInt32(hashBytes, 0);
+
+                // Map to our ID range
+                int range = EXPANSION_ID_END - EXPANSION_ID_START;
+                int id = EXPANSION_ID_START + (int)(hashValue % range);
+
+                return id;
+            }
+        }
+
+        /// <summary>
+        /// Get all registered expansion packs
+        /// </summary>
+        public static List<ExpansionPackInfo> GetRegisteredPacks()
+        {
+            return registeredPacks.Values.ToList();
+        }
+
+        /// <summary>
+        /// Get all registered decor items
+        /// </summary>
+        public static List<DecorItemData> GetAllDecorItems()
+        {
+            return registeredItems.Values.ToList();
+        }
+
+        /// <summary>
+        /// Get decor items by category.
+        /// NOTE: Categories are not currently used in the game - all items appear in the Furnitures page.
+        /// </summary>
+        public static List<DecorItemData> GetDecorItemsByCategory(string category)
+        {
+            if (string.IsNullOrEmpty(category))
+                return new List<DecorItemData>();
+
+            return registeredItems.Values
+                .Where(item => string.Equals(item.Category, category, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Get decor item by ID
+        /// </summary>
+        public static DecorItemData GetDecorItemById(int furnitureId)
+        {
+            return registeredItems.ContainsKey(furnitureId) ? registeredItems[furnitureId] : null;
+        }
+
+        /// <summary>
+        /// Check if a pack is registered
+        /// </summary>
+        public static bool IsPackRegistered(string packId)
+        {
+            return registeredPacks.ContainsKey(packId);
+        }
+
+        /// <summary>
+        /// Get expansion pack info
+        /// </summary>
+        public static ExpansionPackInfo GetPackInfo(string packId)
+        {
+            return registeredPacks.ContainsKey(packId) ? registeredPacks[packId] : null;
+        }
+
+        /// <summary>
+        /// Get decor item by pack ID and internal name
+        /// </summary>
+        public static DecorItemData GetDecorItem(string packId, string internalName)
+        {
+            string itemKey = $"{packId}:{internalName}";
+            if (internalNameToId.TryGetValue(itemKey, out int id))
+            {
+                return GetDecorItemById(id);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Get all items from a specific expansion pack
+        /// </summary>
+        public static List<DecorItemData> GetPackItems(string packId)
+        {
+            if (expansionItems.ContainsKey(packId))
+            {
+                return new List<DecorItemData>(expansionItems[packId]);
+            }
+            return new List<DecorItemData>();
+        }
+
+        /// <summary>
+        /// Unregister an expansion pack and all its items
+        /// </summary>
+        public static bool UnregisterExpansionPack(string packId)
+        {
+            if (!registeredPacks.ContainsKey(packId))
+            {
+                LogWarning($"Pack '{packId}' is not registered!");
                 return false;
             }
+
+            // Remove all items from this pack
+            if (expansionItems.ContainsKey(packId))
+            {
+                foreach (var item in expansionItems[packId])
+                {
+                    registeredItems.Remove(item.FurnitureID);
+                    usedIds.Remove(item.FurnitureID);
+
+                    string itemKey = $"{packId}:{item.InternalName}";
+                    internalNameToId.Remove(itemKey);
+                }
+                expansionItems.Remove(packId);
+            }
+
+            // Remove pending items
+            pendingItems.Remove(packId);
+
+            // Remove pack info
+            registeredPacks.Remove(packId);
+
+            // Remove assembly reference
+            packAssemblies.Remove(packId);
+
+            LogInfo($"Unregistered expansion pack: {packId}");
+            return true;
         }
 
         /// <summary>
-        /// Create FurnitureSO from item data
+        /// Get assembly for a registered pack
         /// </summary>
-        private static FurnitureSO CreateFurnitureSO(DecorItemData itemData, string packId)
+        public static System.Reflection.Assembly GetPackAssembly(string packId)
         {
-            try
-            {
-                // Find a base furniture to copy from
-                var idManager = Singleton<IDManager>.Instance;
-                var baseFurniture = idManager.FurnitureSO(itemData.BaseReferenceID);
-
-                if (baseFurniture == null)
-                {
-                    LogError($"Base furniture ID {itemData.BaseReferenceID} not found");
-                    return null;
-                }
-
-                // Create a copy
-                var furnitureSO = UnityEngine.Object.Instantiate(baseFurniture);
-                furnitureSO.name = itemData.InternalName;
-                furnitureSO.ID = itemData.FurnitureID;
-                furnitureSO.Cost = itemData.BaseCost;
-                furnitureSO.BoxSize = itemData.BoxSize;
-
-                // Create prefab
-                var prefab = CreateDecorPrefab(itemData, baseFurniture.FurniturePrefab, packId);
-                if (prefab != null)
-                {
-                    furnitureSO.FurniturePrefab = prefab;
-                }
-
-                // Handle icon
-                if (itemData.IconTexture != null)
-                {
-                    var sprite = Sprite.Create(
-                        itemData.IconTexture,
-                        new Rect(0, 0, itemData.IconTexture.width, itemData.IconTexture.height),
-                        new Vector2(0.5f, 0.5f),
-                        100.0f
-                    );
-                    furnitureSO.FurnitureIcon = sprite;
-                }
-
-                return furnitureSO;
-            }
-            catch (Exception ex)
-            {
-                LogError($"Failed to create FurnitureSO: {ex.Message}");
-                return null;
-            }
+            return packAssemblies.ContainsKey(packId) ? packAssemblies[packId] : null;
         }
 
         /// <summary>
-        /// Create decor prefab from item data
+        /// Clear all cached data (for debugging/testing)
         /// </summary>
-        private static GameObject CreateDecorPrefab(DecorItemData itemData, GameObject basePrefab, string packId)
+        internal static void ClearAllData()
         {
-            try
-            {
-                var prefab = UnityEngine.Object.Instantiate(basePrefab);
-                prefab.SetActive(false);
-                prefab.name = $"{itemData.InternalName}_Prefab";
+            registeredPacks.Clear();
+            registeredItems.Clear();
+            expansionItems.Clear();
+            pendingItems.Clear();
+            internalNameToId.Clear();
+            usedIds.Clear();
+            packAssemblies.Clear();
 
-                // Configure Furniture component
-                var furniture = prefab.GetComponent<Furniture>();
-                if (furniture == null)
-                {
-                    furniture = prefab.AddComponent<Furniture>();
-                }
-
-                furniture.ID = itemData.FurnitureID;
-                if (furniture.Data == null)
-                {
-                    furniture.Data = new FurnitureData { FurnitureID = itemData.FurnitureID };
-                }
-                else
-                {
-                    furniture.Data.FurnitureID = itemData.FurnitureID;
-                }
-
-                // Configure PlacingMode
-                ConfigureDecorPlacingMode(prefab, itemData, furniture);
-
-                // Configure collision
-                ConfigureCollision(prefab, itemData);
-
-                // Configure visuals
-                if (itemData.CustomMesh != null || itemData.CustomMaterial != null)
-                {
-                    ConfigureVisuals(prefab, itemData, packId);
-                }
-
-                // Apply scale
-                prefab.transform.localScale = itemData.VisualScale;
-
-                // Remove any display components
-                RemoveDisplayComponents(prefab);
-
-                return prefab;
-            }
-            catch (Exception ex)
-            {
-                LogError($"Failed to create decor prefab: {ex.Message}");
-                return null;
-            }
+            LogInfo("Cleared all expansion API data");
         }
 
         /// <summary>
-        /// Configure DecorPlacingMode component
+        /// Log info message
         /// </summary>
-        private static void ConfigureDecorPlacingMode(GameObject prefab, DecorItemData itemData, Furniture furniture)
+        public static void LogInfo(string message)
         {
-            var placingMode = furniture.PlacingMode;
-            GameObject placingModeObject = null;
-
-            if (placingMode == null)
-            {
-                placingMode = prefab.GetComponentInChildren<FurniturePlacingMode>();
-                if (placingMode == null)
-                {
-                    placingModeObject = new GameObject("PlacingMode");
-                    placingModeObject.transform.SetParent(prefab.transform);
-                    placingModeObject.transform.localPosition = Vector3.zero;
-                    placingModeObject.transform.localRotation = Quaternion.identity;
-                    placingModeObject.transform.localScale = Vector3.one;
-
-                    placingMode = placingModeObject.AddComponent<Components.DecorPlacingMode>();
-                }
-                else
-                {
-                    placingModeObject = placingMode.gameObject;
-                    if (!(placingMode is Components.DecorPlacingMode))
-                    {
-                        UnityEngine.Object.DestroyImmediate(placingMode);
-                        placingMode = placingModeObject.AddComponent<Components.DecorPlacingMode>();
-                    }
-                }
-
-                furniture.PlacingMode = placingMode;
-            }
-
-            // Configure placing collider
-            if (placingModeObject != null)
-            {
-                var placingCollider = placingModeObject.GetComponent<BoxCollider>();
-                if (placingCollider == null)
-                {
-                    placingCollider = placingModeObject.AddComponent<BoxCollider>();
-                }
-
-                placingCollider.size = itemData.CollisionSize;
-                placingCollider.center = itemData.CollisionCenter;
-                placingCollider.isTrigger = true;
-            }
-        }
-
-        /// <summary>
-        /// Configure collision for the prefab
-        /// </summary>
-        private static void ConfigureCollision(GameObject prefab, DecorItemData itemData)
-        {
-            // Remove existing colliders (except PlacingMode)
-            var colliders = prefab.GetComponentsInChildren<Collider>(true);
-            foreach (var collider in colliders)
-            {
-                if (collider.transform.parent != prefab.transform || collider.name == "PlacingMode")
-                    continue;
-
-                UnityEngine.Object.DestroyImmediate(collider);
-            }
-
-            // Add main collider
-            var mainCollider = prefab.AddComponent<BoxCollider>();
-            mainCollider.size = itemData.CollisionSize;
-            mainCollider.center = itemData.CollisionCenter;
-            mainCollider.isTrigger = itemData.IsWalkable;
-
-            // Add ground detector if walkable
-            if (itemData.IsWalkable)
-            {
-                var groundObj = new GameObject("GroundDetector");
-                groundObj.transform.SetParent(prefab.transform);
-                groundObj.transform.localPosition = Vector3.zero;
-                groundObj.transform.localRotation = Quaternion.identity;
-
-                var groundCollider = groundObj.AddComponent<BoxCollider>();
-                groundCollider.size = new Vector3(itemData.CollisionSize.x, 0.001f, itemData.CollisionSize.z);
-                groundCollider.center = new Vector3(itemData.CollisionCenter.x, 0.0005f, itemData.CollisionCenter.z);
-                groundCollider.isTrigger = false;
-            }
-
-            prefab.layer = LayerMask.NameToLayer("Interactable");
-        }
-
-        /// <summary>
-        /// Configure visuals for the prefab
-        /// </summary>
-        private static void ConfigureVisuals(GameObject prefab, DecorItemData itemData, string packId)
-        {
-            var visualsContainer = prefab.transform.Find("Visuals");
-            if (visualsContainer == null)
-            {
-                visualsContainer = new GameObject("Visuals").transform;
-                visualsContainer.SetParent(prefab.transform);
-                visualsContainer.localPosition = Vector3.zero;
-                visualsContainer.localRotation = Quaternion.identity;
-            }
-
-            // Hide existing renderers
-            var existingRenderers = visualsContainer.GetComponentsInChildren<MeshRenderer>();
-            foreach (var renderer in existingRenderers)
-            {
-                renderer.enabled = false;
-            }
-
-            // Create custom visual
-            GameObject customMeshObject = new GameObject($"{itemData.InternalName}_Mesh");
-            customMeshObject.transform.SetParent(visualsContainer);
-            customMeshObject.transform.localPosition = Vector3.zero;
-            customMeshObject.transform.localRotation = Quaternion.identity;
-            customMeshObject.transform.localScale = itemData.VisualScale;
-
-            var meshRenderer = customMeshObject.AddComponent<MeshRenderer>();
-            var meshFilter = customMeshObject.AddComponent<MeshFilter>();
-
-            if (itemData.CustomMesh != null)
-            {
-                meshFilter.mesh = itemData.CustomMesh;
-            }
-            else
-            {
-                meshFilter.mesh = AssetLoader.CreateDefaultMesh();
-            }
-
-            if (itemData.CustomMaterial != null)
-            {
-                meshRenderer.material = itemData.CustomMaterial;
-            }
-            else
-            {
-                meshRenderer.material = CreateDefaultMaterial(itemData.InternalName);
-            }
-        }
-
-        /// <summary>
-        /// Remove display-related components
-        /// </summary>
-        private static void RemoveDisplayComponents(GameObject prefab)
-        {
-            var displayComponent = prefab.GetComponent<Display>();
-            if (displayComponent != null)
-            {
-                UnityEngine.Object.DestroyImmediate(displayComponent);
-            }
-
-            var displaySlots = prefab.GetComponentsInChildren<DisplaySlot>(true);
-            foreach (var slot in displaySlots)
-            {
-                UnityEngine.Object.DestroyImmediate(slot.gameObject);
-            }
-
-            var canvases = prefab.GetComponentsInChildren<Canvas>(true);
-            foreach (var canvas in canvases)
-            {
-                if (canvas.name.Contains("Price") || canvas.name.Contains("Tag"))
-                {
-                    UnityEngine.Object.DestroyImmediate(canvas.gameObject);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Create a default material
-        /// </summary>
-        private static Material CreateDefaultMaterial(string itemName)
-        {
-            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            var material = new Material(shader);
-            material.name = $"{itemName}_DefaultMaterial";
-            return material;
-        }
-
-        #endregion
-
-        #region Logging
-
-        /// <summary>
-        /// Log information message
-        /// </summary>
-        internal static void LogInfo(string message)
-        {
-            DecorMod1Plugin.Log?.LogInfo($"[DecorExpansionAPI] {message}");
+            logger?.LogInfo($"[ExpansionAPI] {message}");
         }
 
         /// <summary>
         /// Log warning message
         /// </summary>
-        internal static void LogWarning(string message)
+        public static void LogWarning(string message)
         {
-            DecorMod1Plugin.Log?.LogWarning($"[DecorExpansionAPI] {message}");
+            logger?.LogWarning($"[ExpansionAPI] {message}");
         }
 
         /// <summary>
         /// Log error message
         /// </summary>
-        internal static void LogError(string message)
+        public static void LogError(string message)
         {
-            DecorMod1Plugin.Log?.LogError($"[DecorExpansionAPI] {message}");
+            logger?.LogError($"[ExpansionAPI] {message}");
         }
-
-        #endregion
     }
 
     /// <summary>
@@ -1033,11 +483,11 @@ namespace SupermarketDecorMod1.API
     {
         public string PackId { get; set; }
         public string PackName { get; set; }
-        public string PackVersion { get; set; }
+        public string Version { get; set; }
         public string Author { get; set; }
         public string[] Dependencies { get; set; }
-        public bool IsEnabled { get; set; }
         public List<int> RegisteredItems { get; set; }
-        public DateTime RegisteredAt { get; set; } = DateTime.Now;
+        public bool IsEnabled { get; set; } = true;
+        public Dictionary<string, object> CustomData { get; set; } = new Dictionary<string, object>();
     }
 }
