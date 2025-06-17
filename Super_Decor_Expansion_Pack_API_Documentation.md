@@ -28,7 +28,7 @@ The Super Decor Expansion API enables mod developers to create expansion packs t
 
 ### Important Notes
 - **Categories are not currently used**: While the API supports categorization, all items currently appear in the Furnitures page regardless of their assigned category. Categories are implemented for future use when a custom decor UI might be added.
-- The base framework (`com.leptoon.supermarketdecomod1`) must be installed for expansion packs to work
+- The base framework (`com.leptoon.supermarketdecormod1`) must be installed for expansion packs to work
 - All expansion pack items are assigned IDs in the range 760000-999999
 - Items must reference a valid base furniture ID to inherit default behaviors
 - **Automatic pricing**: Delivery fees are calculated automatically based on box size. Sell price is always 50% of the purchase cost.
@@ -754,7 +754,7 @@ itemData.IconAssetName = "item_icon";      // Loads from Resources/Icons/
 DecorExpansionAPI.API_VERSION = "1.2.0"
 
 // Base mod GUID
-DecorExpansionAPI.BASE_MOD_GUID = "com.leptoon.supermarketdecomod1"
+DecorExpansionAPI.BASE_MOD_GUID = "com.leptoon.supermarketdecormod1"
 
 // ID Range
 EXPANSION_ID_START = 760000
