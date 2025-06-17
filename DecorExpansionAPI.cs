@@ -1,7 +1,6 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using SupermarketDecorMod1.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -489,5 +488,164 @@ namespace SupermarketDecorMod1.API
         public List<int> RegisteredItems { get; set; }
         public bool IsEnabled { get; set; } = true;
         public Dictionary<string, object> CustomData { get; set; } = new Dictionary<string, object>();
+    }
+
+    /// <summary>
+    /// Data structure for registering decor items from expansion packs
+    /// </summary>
+    public class DecorItemData
+    {
+        // Identity
+        public string InternalName { get; set; }
+        public string ItemName { get; set; }
+        public string Description { get; set; }
+
+        /// <summary>
+        /// Category for organizing decor items.
+        /// NOTE: Categories are not currently used in the game - all items appear in the Furnitures page.
+        /// This is for future use when a custom decor UI might be implemented.
+        /// Use DecorCategories class for standard categories or any custom string.
+        /// </summary>
+        public string Category { get; set; } = DecorCategories.Fixtures;
+
+        // ID assigned by the system
+        public int FurnitureID { get; internal set; }
+
+        // Economic
+        public float BaseCost { get; set; } = 100f;
+
+        // Physical - Box size must match game's BoxSize enum values
+        public BoxSize BoxSize { get; set; } = BoxSize._8x8x8;
+        public int BaseReferenceID { get; set; } = DecorFurnitureIDs.BASE_SMALL_FURNITURE;
+
+        // Collision
+        public Vector3 CollisionSize { get; set; } = Vector3.one;
+        public Vector3 CollisionCenter { get; set; } = Vector3.zero;
+        public bool IsWalkable { get; set; } = false;
+
+        // Visual
+        public Vector3 VisualScale { get; set; } = Vector3.one;
+        public Mesh CustomMesh { get; set; }
+        public Material CustomMaterial { get; set; }
+        public Texture2D IconTexture { get; set; }
+
+        // Placement
+        public bool CanPlaceOnFloor { get; set; } = true;
+        public bool CanPlaceOnWalls { get; set; } = false;
+        public bool CanPlaceOnCeiling { get; set; } = false;
+        public bool RequiresFloorContact { get; set; } = true;
+        public bool AllowFloating { get; set; } = false;
+
+        // Interaction
+        public bool IsInteractable { get; set; } = false;
+        public bool IsMoveable { get; set; } = true;
+        public bool CanRotate { get; set; } = true;
+        public bool CanScale { get; set; } = false;
+
+        // Visual settings
+        public bool CastShadows { get; set; } = true;
+        public bool ReceiveShadows { get; set; } = true;
+
+        // Physics
+        public bool HasPhysics { get; set; } = false;
+        public bool IsKinematic { get; set; } = true;
+
+        // Unlock requirements
+        public int RequiredLevel { get; set; } = 1;
+        public bool IsUnlocked { get; set; } = true;
+
+        // Asset references (for loading from expansion pack assets)
+        public string AssetBundleName { get; set; }
+        public string MeshAssetName { get; set; }
+        public string MaterialAssetName { get; set; }
+        public string IconAssetName { get; set; }
+
+        /// <summary>
+        /// Create a copy of this item data
+        /// </summary>
+        public DecorItemData Clone()
+        {
+            return new DecorItemData
+            {
+                InternalName = InternalName,
+                ItemName = ItemName,
+                Description = Description,
+                Category = Category,
+                FurnitureID = FurnitureID,
+                BaseCost = BaseCost,
+                BoxSize = BoxSize,
+                BaseReferenceID = BaseReferenceID,
+                CollisionSize = CollisionSize,
+                CollisionCenter = CollisionCenter,
+                IsWalkable = IsWalkable,
+                VisualScale = VisualScale,
+                CustomMesh = CustomMesh,
+                CustomMaterial = CustomMaterial,
+                IconTexture = IconTexture,
+                CanPlaceOnFloor = CanPlaceOnFloor,
+                CanPlaceOnWalls = CanPlaceOnWalls,
+                CanPlaceOnCeiling = CanPlaceOnCeiling,
+                RequiresFloorContact = RequiresFloorContact,
+                AllowFloating = AllowFloating,
+                IsInteractable = IsInteractable,
+                IsMoveable = IsMoveable,
+                CanRotate = CanRotate,
+                CanScale = CanScale,
+                CastShadows = CastShadows,
+                ReceiveShadows = ReceiveShadows,
+                HasPhysics = HasPhysics,
+                IsKinematic = IsKinematic,
+                RequiredLevel = RequiredLevel,
+                IsUnlocked = IsUnlocked,
+                AssetBundleName = AssetBundleName,
+                MeshAssetName = MeshAssetName,
+                MaterialAssetName = MaterialAssetName,
+                IconAssetName = IconAssetName
+            };
+        }
+    }
+
+    /// <summary>
+    /// Standard categories for organizing decor items.
+    /// NOTE: Categories are not currently used in the game - all items appear in the Furnitures page.
+    /// This is for future use when a custom decor UI might be implemented.
+    /// Expansion packs can use these standard categories or define their own custom category strings.
+    /// </summary>
+    public static class DecorCategories
+    {
+        // Standard categories
+        public const string Fixtures = "Fixtures";
+        public const string WallDecor = "WallDecor";
+        public const string FloorDecor = "FloorDecor";
+        public const string Lighting = "Lighting";
+        public const string Outdoor = "Outdoor";
+        public const string Seasonal = "Seasonal";
+
+        /// <summary>
+        /// Get all standard categories.
+        /// NOTE: Categories are not currently used in the game.
+        /// </summary>
+        public static string[] GetStandardCategories()
+        {
+            return new[] { Fixtures, WallDecor, FloorDecor, Lighting, Outdoor, Seasonal };
+        }
+
+        /// <summary>
+        /// Check if a category is a standard category.
+        /// NOTE: Categories are not currently used in the game.
+        /// </summary>
+        public static bool IsStandardCategory(string category)
+        {
+            if (string.IsNullOrEmpty(category))
+                return false;
+
+            var standardCategories = GetStandardCategories();
+            foreach (var cat in standardCategories)
+            {
+                if (string.Equals(cat, category, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
     }
 }
