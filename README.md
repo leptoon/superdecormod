@@ -39,7 +39,7 @@ More Information Coming Soon
 ## Usage
 
 1. Purchase decorative items through the in-game computer, they will be added to the bottom of the "Furnitures" section
-2. Place items using the standard furniture placement system
+2. Place items using the custom decor item placement system
 3. Items can be freely rotated and positioned
 4. Item placement is unrestricted and supports wall and ceiling mounting
 5. All items can be boxed up and sold for half price like regular furniture
