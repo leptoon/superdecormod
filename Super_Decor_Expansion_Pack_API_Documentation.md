@@ -1,5 +1,5 @@
 # Super Decor Expansion API Documentation
-Version 1.2.0
+Version 1.2.1
 
 ## Table of Contents
 - [Overview](#overview)
@@ -31,6 +31,7 @@ The Super Decor Expansion API enables mod developers to create expansion packs t
 - The base framework (`com.leptoon.supermarketdecomod1`) must be installed for expansion packs to work
 - All expansion pack items are assigned IDs in the range 760000-999999
 - Items must reference a valid base furniture ID to inherit default behaviors
+- **Automatic pricing**: Delivery fees are calculated automatically based on box size. Sell price is always 50% of the purchase cost.
 
 ## Requirements
 
@@ -195,9 +196,7 @@ public class DecorItemData
     public int FurnitureID { get; internal set; } // Auto-assigned by API
 
     // === Economics ===
-    public float BaseCost { get; set; } = 100f;      // Purchase price
-    public float DeliveryCost { get; set; } = 10f;   // Delivery fee
-    public float SellPrice { get; set; } = 70f;      // Sell-back value
+    public float BaseCost { get; set; } = 100f;      // Purchase price (sell price is always 50%)
 
     // === Physical Properties ===
     public BoxSize BoxSize { get; set; } = BoxSize._8x8x8;  // Delivery box size
@@ -401,8 +400,6 @@ private void RegisterSimpleLamp()
 
         // Economics
         BaseCost = 150f,
-        DeliveryCost = 15f,
-        SellPrice = 105f,
 
         // Physical
         BoxSize = BoxSize._8x8x8,
@@ -448,7 +445,6 @@ private void RegisterWallArt()
 
         // Economics
         BaseCost = 200f,
-        DeliveryCost = 10f,
 
         // Physical
         BoxSize = BoxSize._8x8x8,
@@ -490,8 +486,6 @@ private void RegisterFloorPlant()
 
         // Higher price for larger item
         BaseCost = 350f,
-        DeliveryCost = 25f,
-        SellPrice = 245f,
 
         // Larger box size
         BoxSize = BoxSize._15x15x15,
@@ -596,8 +590,6 @@ public class ModernDecorPack : BaseUnityPlugin
             Category = DecorCategories.Lighting,
             
             BaseCost = 180f * PriceMultiplier.Value,
-            DeliveryCost = 15f,
-            SellPrice = 126f * PriceMultiplier.Value,
             
             BoxSize = BoxSize._8x8x8,
             BaseReferenceID = DecorFurnitureIDs.BASE_SMALL_FURNITURE,
@@ -737,7 +729,10 @@ itemData.IconAssetName = "item_icon";      // Loads from Resources/Icons/
 
 ## Version History
 
-### v1.2.0 (Current)
+### v1.2.1 (Current)
+- Removed methods that reference non-existent game classes SellPrice and DeliveryCost.
+
+### v1.2.0
 - New flexible category system (categories not yet used in-game)
 - Improved asset loading system
 - Added `RegisterExpansionPackWithAssembly` method
