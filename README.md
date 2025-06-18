@@ -33,11 +33,16 @@ There are some notable differences between the default placement system and my c
 3. Place the mod DLLs in your BepInEx/plugins folder. The base mod contains no items, you need at least one expansion.
 4. Launch the game
 
-## Available Decoration Packs
+## Expansion Packs
+The mod supports expansion packs, sort of like The Sims. I invite content creators to make their own expansion packs following my detailed tutorial with custom tools to streamline development. No coding required!
 
-Each pack can be installed independently:
+I will offer full support to content creators and to those who download and use third-party expansion packs.
 
-More Information Coming Soon
+I want to make it easy for creators to release expansion packs for Super Decor. With that in mind, I made a web based expansion pack generator that creators can use to automatically generate all of the code for their expansion pack.
+
+[Expansion Pack Generator](https://leptoon.github.io/superdecormod/)
+
+Don't release content that you didn't make unless you have explicit permission from the author. Expansion packs released with infringing content will be reported and taken down.
 
 ## Usage
 
@@ -63,7 +68,7 @@ SOFTWARE.
 
 ## Troubleshooting
 
-For assistance with the creation of an expansion pack, send me a message on Nexus Mods. Check mod page for a general FAQ.
+For assistance with the creation of an expansion pack, send me a message on Nexus Mods. Check the mod page for a general FAQ.
 
 For bug reports and feature requests, please leave a comment on the Nexus mod page or send me a message.
 
