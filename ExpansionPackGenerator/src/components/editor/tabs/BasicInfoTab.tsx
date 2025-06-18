@@ -7,6 +7,7 @@ import { Textarea } from '../../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../ui/tooltip';
 import { Alert, AlertDescription } from '../../ui/alert';
+import { useExpansionPackStore } from '../../../store/expansionPackStore';
 
 interface BasicInfoTabProps {
   item: DecorItem;
@@ -14,67 +15,78 @@ interface BasicInfoTabProps {
 }
 
 export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ item, onChange }) => {
-  const [internalNameError, setInternalNameError] = React.useState('');
-
-  const validateInternalName = (value: string) => {
-    if (!value) {
-      setInternalNameError('Internal name is required');
-      return false;
+  // Get access to the store to check for duplicates
+  const items = useExpansionPackStore(state => state.pack.items);
+  
+  // Function to generate internal name from item name
+  const generateInternalName = (itemName: string): string => {
+    if (!itemName || itemName.trim() === '') {
+      // Generate a unique untitled name
+      let baseName = 'untitled_item';
+      let counter = 1;
+      let internalName = baseName;
+      
+      // Check for duplicates and increment counter if needed
+      while (items.some(i => i.internalName === internalName && i.internalName !== item.internalName)) {
+        internalName = `${baseName}_${counter}`;
+        counter++;
+      }
+      
+      return internalName;
     }
-    if (!/^[a-z_][a-z0-9_]*$/.test(value)) {
-      setInternalNameError('Must be lowercase with underscores (e.g., my_item_name)');
-      return false;
+    
+    // Generate base internal name from item name
+    let baseInternalName = itemName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric chars with underscores
+      .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
+      .replace(/_+/g, '_') // Replace multiple underscores with single ones
+      .substring(0, 50); // Limit to 50 characters
+    
+    // Check if this internal name already exists
+    let finalInternalName = baseInternalName;
+    let counter = 1;
+    
+    while (items.some(i => i.internalName === finalInternalName && i.internalName !== item.internalName)) {
+      // Append _1, _2, etc. to make it unique
+      finalInternalName = `${baseInternalName}_${counter}`;
+      counter++;
     }
-    if (value.length > 50) {
-      setInternalNameError('Maximum 50 characters');
-      return false;
-    }
-    setInternalNameError('');
-    return true;
+    
+    return finalInternalName;
   };
 
-  const handleInternalNameChange = (value: string) => {
-    validateInternalName(value);
-    onChange('internalName', value);
+  const handleItemNameChange = (value: string) => {
+    // Update the item name
+    onChange('itemName', value);
+    
+    // Always generate and update internal name
+    const newInternalName = generateInternalName(value);
+    onChange('internalName', newInternalName);
   };
+
+  // Initialize internal name if it's empty but item name exists
+  React.useEffect(() => {
+    if (!item.internalName && item.itemName) {
+      const newInternalName = generateInternalName(item.itemName);
+      onChange('internalName', newInternalName);
+    }
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="internalName">Internal Name</Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="w-4 h-4 text-gray-400 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Unique identifier used in code. Must be lowercase with underscores.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <Input
-            id="internalName"
-            value={item.internalName}
-            onChange={(e) => handleInternalNameChange(e.target.value)}
-            placeholder="crystal_ball"
-            className={internalNameError ? "border-red-500" : ""}
-          />
-          {internalNameError && (
-            <p className="text-sm text-red-500">{internalNameError}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="itemName">Display Name</Label>
+          <Label htmlFor="itemName">Item Name</Label>
           <Input
             id="itemName"
             value={item.itemName}
-            onChange={(e) => onChange('itemName', e.target.value)}
+            onChange={(e) => handleItemNameChange(e.target.value)}
             placeholder="Crystal Ball"
           />
+          <p className="text-sm text-gray-500">
+            Internal name: <code className="bg-gray-100 px-1 rounded">{item.internalName || 'untitled_item'}</code>
+          </p>
         </div>
 
         <div className="space-y-2">

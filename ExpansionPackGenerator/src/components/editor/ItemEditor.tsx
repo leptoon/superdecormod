@@ -37,7 +37,7 @@ export const ItemEditor: React.FC = () => {
   const handleNestedFieldChange = (parentField: string, field: string, value: any) => {
     updateItem(selectedItem.internalName, {
       [parentField]: {
-        ...(selectedItem[parentField as keyof typeof selectedItem] as any || {}),
+        ...selectedItem[parentField as keyof typeof selectedItem],
         [field]: value
       }
     });
@@ -63,8 +63,12 @@ export const ItemEditor: React.FC = () => {
     <div className="flex flex-col h-full">
       {/* Header - Fixed height, responsive padding */}
       <div className="p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
-        <h2 className="text-lg font-semibold truncate">{selectedItem.itemName}</h2>
-        <p className="text-sm text-gray-500 truncate">{selectedItem.internalName}</p>
+        <h2 className="text-lg font-semibold truncate">
+          {selectedItem.itemName || 'Untitled Item'}
+        </h2>
+        <p className="text-sm text-gray-500 truncate">
+          {selectedItem.internalName || 'auto-generated'}
+        </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
