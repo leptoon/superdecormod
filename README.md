@@ -61,7 +61,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## Support
+## Troubleshooting
+
+For assistance with the creation of an expansion pack, send me a message on Nexus Mods. Check mod page for a general FAQ.
 
 For bug reports and feature requests, please leave a comment on the Nexus mod page or send me a message.
 
