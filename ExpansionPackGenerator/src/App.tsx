@@ -11,7 +11,7 @@ import { ChevronLeft, ChevronRight, Code } from 'lucide-react';
 
 function App() {
   const [showWelcome, setShowWelcome] = useState(true);
-  const [isCodePreviewOpen, setIsCodePreviewOpen] = useState(true);
+  const [isCodePreviewOpen, setIsCodePreviewOpen] = useState(false);
   const selectedItemId = useExpansionPackStore(state => state.selectedItemId);
   const itemCount = useExpansionPackStore(state => state.pack.items.length);
 
