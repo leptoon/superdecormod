@@ -11,7 +11,7 @@ import { useExpansionPackStore } from '../../../store/expansionPackStore';
 
 interface BasicInfoTabProps {
   item: DecorItem;
-  onChange: (field: string, value: any) => void;
+  onChange: (field: keyof DecorItem, value: DecorItem[keyof DecorItem]) => void;
 }
 
 export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ item, onChange }) => {
@@ -22,7 +22,7 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ item, onChange }) =>
   const generateInternalName = (itemName: string): string => {
     if (!itemName || itemName.trim() === '') {
       // Generate a unique untitled name
-      let baseName = 'untitled_item';
+      const baseName = 'untitled_item';
       let counter = 1;
       let internalName = baseName;
       
@@ -36,7 +36,7 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ item, onChange }) =>
     }
     
     // Generate base internal name from item name
-    let baseInternalName = itemName
+    const baseInternalName = itemName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric chars with underscores
       .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores

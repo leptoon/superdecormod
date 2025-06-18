@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { ExpansionPack, DecorItem, defaultExpansionPack, defaultDecorItem } from '../types/expansion';
+import { type ExpansionPack, type DecorItem, defaultExpansionPack, defaultDecorItem } from '../types/expansion';
 
 interface ExpansionPackStore {
   pack: ExpansionPack;
@@ -83,7 +83,7 @@ export const useExpansionPackStore = create<ExpansionPackStore>()(
     
     addItem: (itemData) => set((state) => {
       const existingNames = state.pack.items.map(i => i.internalName);
-      let baseName = itemData?.internalName || "new_item";
+      const baseName = itemData?.internalName || "new_item";
       let counter = 1;
       let internalName = baseName;
       

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileImage, Package, Palette, FileText, Download } from 'lucide-react';
-import { DecorItem } from '../../../types/expansion';
+import { type DecorItem } from '../../../types/expansion';
 import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
@@ -9,11 +9,37 @@ import { useExpansionPackStore } from '../../../store/expansionPackStore';
 
 interface AssetsTabProps {
   item: DecorItem;
-  onChange: (field: string, value: any) => void;
+  onChange: (field: keyof DecorItem, value: DecorItem[keyof DecorItem]) => void;
 }
 
 export const AssetsTab: React.FC<AssetsTabProps> = ({ item, onChange }) => {
   const pack = useExpansionPackStore(state => state.pack);
+
+  // Function to generate asset names based on internal name
+  const generateAssetNames = (internalName: string) => {
+    const baseName = internalName || 'untitled_item';
+    return {
+      iconAssetName: `${baseName}_icon`,
+      meshAssetName: baseName,
+      materialAssetName: `${baseName}_material`
+    };
+  };
+
+  // Update asset names whenever internal name changes
+  React.useEffect(() => {
+    const assetNames = generateAssetNames(item.internalName);
+    
+    // Only update if the values are different to avoid infinite loops
+    if (item.iconAssetName !== assetNames.iconAssetName) {
+      onChange('iconAssetName', assetNames.iconAssetName);
+    }
+    if (item.meshAssetName !== assetNames.meshAssetName) {
+      onChange('meshAssetName', assetNames.meshAssetName);
+    }
+    if (item.materialAssetName !== assetNames.materialAssetName) {
+      onChange('materialAssetName', assetNames.materialAssetName);
+    }
+  }, [item.internalName]);
 
   const generateAssetChecklist = () => {
     const checklist = `Asset Checklist for ${item.itemName}
@@ -53,7 +79,7 @@ Place all files in the Resources folder of your project.`;
       <div>
         <h3 className="text-lg font-medium mb-4">Asset References</h3>
         <p className="text-sm text-gray-600">
-          Configure the asset files that will be embedded in your expansion pack.
+          Asset names are automatically generated based on the item's internal name.
         </p>
       </div>
 
@@ -66,7 +92,8 @@ Place all files in the Resources folder of your project.`;
           <Input
             id="iconAssetName"
             value={item.iconAssetName}
-            onChange={(e) => onChange('iconAssetName', e.target.value)}
+            disabled
+            className="bg-gray-50"
             placeholder="crystal_ball_icon"
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -82,7 +109,8 @@ Place all files in the Resources folder of your project.`;
           <Input
             id="meshAssetName"
             value={item.meshAssetName}
-            onChange={(e) => onChange('meshAssetName', e.target.value)}
+            disabled
+            className="bg-gray-50"
             placeholder="crystal_ball"
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -98,11 +126,12 @@ Place all files in the Resources folder of your project.`;
           <Input
             id="materialAssetName"
             value={item.materialAssetName}
-            onChange={(e) => onChange('materialAssetName', e.target.value)}
+            disabled
+            className="bg-gray-50"
             placeholder="crystal_ball_material"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Usually the same as mesh name + "_material"
+            Automatically generated from mesh name
           </p>
         </div>
 

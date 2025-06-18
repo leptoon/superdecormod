@@ -1,56 +1,54 @@
 import React from 'react';
-import { AlertCircle, Info } from 'lucide-react';
-import { DecorItem } from '../../../types/expansion';
-import { Checkbox } from '../../ui/checkbox';
+import { Info } from 'lucide-react';
+import type { DecorItem } from '../../../types/expansion';
 import { Label } from '../../ui/label';
-import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
+import { Checkbox } from '../../ui/checkbox';
+import { Alert, AlertDescription } from '../../ui/alert';
 
 interface PlacementTabProps {
   item: DecorItem;
-  onChange: (field: string, value: any) => void;
+  onChange: (field: keyof DecorItem, value: DecorItem[keyof DecorItem]) => void;
 }
 
 export const PlacementTab: React.FC<PlacementTabProps> = ({ item, onChange }) => {
-  const placementOptions = [
+  const placementOptions: Array<{
+    field: keyof DecorItem;
+    label: string;
+    description: string;
+  }> = [
     {
       field: 'canPlaceOnFloor',
       label: 'Can Place on Floor',
-      description: 'Allow placement on floor surfaces',
-      default: true
+      description: 'Item can be placed on the floor'
     },
     {
       field: 'canPlaceOnWalls',
       label: 'Can Place on Walls',
-      description: 'Allow placement on wall surfaces',
-      default: false
+      description: 'Item can be mounted on walls'
     },
     {
       field: 'canPlaceOnCeiling',
       label: 'Can Place on Ceiling',
-      description: 'Allow placement on ceiling surfaces',
-      default: false
+      description: 'Item can be attached to ceilings'
     },
     {
       field: 'requiresFloorContact',
       label: 'Requires Floor Contact',
-      description: 'Item must be in contact with the floor',
-      default: true
+      description: 'Item must be in contact with the floor'
     },
     {
       field: 'allowFloating',
       label: 'Allow Floating',
-      description: 'Item can be placed in mid-air',
-      default: false
+      description: 'Item can be placed in mid-air'
     }
   ];
 
   return (
     <div className="space-y-6">
-      <Alert className="bg-yellow-50 border-yellow-200">
-        <AlertCircle className="h-4 w-4 text-yellow-600" />
-        <AlertTitle className="text-yellow-900">Future Feature Notice</AlertTitle>
-        <AlertDescription className="text-yellow-800">
-          These placement options are reserved for future updates. Items currently follow the placement 
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Note:</strong> These placement settings are planned features. Items currently follow the placement 
           rules of their base furniture type. Your settings will be saved in the generated code with 
           "NOT IMPLEMENTED" comments for when these features are added.
         </AlertDescription>
@@ -75,7 +73,7 @@ export const PlacementTab: React.FC<PlacementTabProps> = ({ item, onChange }) =>
               <div key={option.field} className="flex items-start space-x-3">
                 <Checkbox
                   id={option.field}
-                  checked={item[option.field as keyof DecorItem] as boolean}
+                  checked={item[option.field] as boolean}
                   onCheckedChange={(checked) => onChange(option.field, checked)}
                   className="mt-0.5"
                 />

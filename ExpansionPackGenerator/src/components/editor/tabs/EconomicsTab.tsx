@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
 
 interface EconomicsTabProps {
   item: DecorItem;
-  onChange: (field: string, value: any) => void;
+  onChange: (field: keyof DecorItem, value: DecorItem[keyof DecorItem]) => void;
 }
 
 export const EconomicsTab: React.FC<EconomicsTabProps> = ({ item, onChange }) => {

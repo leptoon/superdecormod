@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { DecorItem } from '../../types/expansion';
 import { useSelectedItem, useExpansionPackStore } from '../../store/expansionPackStore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { BasicInfoTab } from './tabs/BasicInfoTab';
@@ -30,15 +31,13 @@ export const ItemEditor: React.FC = () => {
     return null;
   }
 
-  const handleFieldChange = (field: string, value: any) => {
+  const handleFieldChange = (field: keyof DecorItem, value: DecorItem[keyof DecorItem]) => {
     updateItem(selectedItem.internalName, { [field]: value });
   };
 
-  const handleNestedFieldChange = (parentField: string, field: string, value: any) => {
-    const parentValue = selectedItem[parentField as keyof typeof selectedItem];
-    
-    // Ensure the parent value is an object before spreading
-    if (parentValue && typeof parentValue === 'object') {
+  const handleNestedFieldChange = (parentField: keyof DecorItem, field: string, value: any) => {
+    const parentValue = selectedItem[parentField];
+    if (typeof parentValue === 'object' && parentValue !== null) {
       updateItem(selectedItem.internalName, {
         [parentField]: {
           ...parentValue,
@@ -48,7 +47,8 @@ export const ItemEditor: React.FC = () => {
     }
   };
 
-  const currentTabIndex = tabs.findIndex(t => t.id === activeTab);
+  // Tab navigation
+  const currentTabIndex = tabs.findIndex(tab => tab.id === activeTab);
   const canGoPrevious = currentTabIndex > 0;
   const canGoNext = currentTabIndex < tabs.length - 1;
 
@@ -65,22 +65,12 @@ export const ItemEditor: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header - Fixed height, responsive padding */}
-      <div className="p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
-        <h2 className="text-lg font-semibold truncate">
-          {selectedItem.itemName || 'Untitled Item'}
-        </h2>
-        <p className="text-sm text-gray-500 truncate">
-          {selectedItem.internalName || 'auto-generated'}
-        </p>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-        {/* Tab List - Responsive design */}
-        <div className="border-b border-gray-200 flex-shrink-0">
-          <TabsList className="w-full justify-start px-2 sm:px-4 h-12 bg-gray-50 rounded-none overflow-x-auto">
-            {tabs.map(tab => (
+    <div className="h-full flex flex-col">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        {/* Tab List - Scrollable on mobile */}
+        <div className="flex-shrink-0 border-b border-gray-200">
+          <TabsList className="h-12 w-full rounded-none border-0 bg-gray-50/50 p-0 overflow-x-auto overflow-y-hidden flex">
+            {tabs.map((tab) => (
               <TabsTrigger 
                 key={tab.id} 
                 value={tab.id} 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Vector3 } from '../../../types/expansion';
+import { type Vector3 } from '../../../types/expansion';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { cn } from '../../../lib/utils';

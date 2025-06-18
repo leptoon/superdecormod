@@ -1,4 +1,4 @@
-import { ItemTemplate, BoxSize, DecorCategories } from '../types/expansion';
+import { type ItemTemplate, BoxSize, DecorCategories } from '../types/expansion';
 
 export const itemTemplates: ItemTemplate[] = [
   {

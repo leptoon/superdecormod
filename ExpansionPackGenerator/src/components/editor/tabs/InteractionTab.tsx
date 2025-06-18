@@ -1,17 +1,22 @@
 import React from 'react';
 import { MousePointer, Move, RotateCw, Maximize, Eye, Zap } from 'lucide-react';
-import { DecorItem } from '../../../types/expansion';
+import type { DecorItem } from '../../../types/expansion';
 import { Label } from '../../ui/label';
 import { Checkbox } from '../../ui/checkbox';
 import { Input } from '../../ui/input';
 
 interface InteractionTabProps {
   item: DecorItem;
-  onChange: (field: string, value: any) => void;
+  onChange: (field: keyof DecorItem, value: DecorItem[keyof DecorItem]) => void;
 }
 
 export const InteractionTab: React.FC<InteractionTabProps> = ({ item, onChange }) => {
-  const interactionOptions = [
+  const interactionOptions: Array<{
+    field: keyof DecorItem;
+    label: string;
+    description: string;
+    icon: typeof MousePointer;
+  }> = [
     {
       field: 'isInteractable',
       label: 'Is Interactable',
@@ -38,7 +43,12 @@ export const InteractionTab: React.FC<InteractionTabProps> = ({ item, onChange }
     }
   ];
 
-  const renderingOptions = [
+  const renderingOptions: Array<{
+    field: keyof DecorItem;
+    label: string;
+    description: string;
+    icon: typeof Eye;
+  }> = [
     {
       field: 'castShadows',
       label: 'Cast Shadows',
@@ -53,7 +63,12 @@ export const InteractionTab: React.FC<InteractionTabProps> = ({ item, onChange }
     }
   ];
 
-  const physicsOptions = [
+  const physicsOptions: Array<{
+    field: keyof DecorItem;
+    label: string;
+    description: string;
+    icon: typeof Zap;
+  }> = [
     {
       field: 'hasPhysics',
       label: 'Has Physics',
@@ -83,7 +98,7 @@ export const InteractionTab: React.FC<InteractionTabProps> = ({ item, onChange }
               <div key={option.field} className="flex items-start space-x-3">
                 <Checkbox
                   id={option.field}
-                  checked={item[option.field as keyof DecorItem] as boolean}
+                  checked={item[option.field] as boolean}
                   onCheckedChange={(checked) => onChange(option.field, checked)}
                   className="mt-0.5"
                 />
@@ -109,7 +124,7 @@ export const InteractionTab: React.FC<InteractionTabProps> = ({ item, onChange }
               <div key={option.field} className="flex items-start space-x-3">
                 <Checkbox
                   id={option.field}
-                  checked={item[option.field as keyof DecorItem] as boolean}
+                  checked={item[option.field] as boolean}
                   onCheckedChange={(checked) => onChange(option.field, checked)}
                   className="mt-0.5"
                 />
@@ -135,7 +150,7 @@ export const InteractionTab: React.FC<InteractionTabProps> = ({ item, onChange }
               <div key={option.field} className="flex items-start space-x-3">
                 <Checkbox
                   id={option.field}
-                  checked={item[option.field as keyof DecorItem] as boolean}
+                  checked={item[option.field] as boolean}
                   onCheckedChange={(checked) => onChange(option.field, checked)}
                   className="mt-0.5"
                 />

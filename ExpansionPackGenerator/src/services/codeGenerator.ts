@@ -1,4 +1,4 @@
-import { ExpansionPack, DecorItem, Vector3, ConfigurationOption } from '../types/expansion';
+import { type ExpansionPack, type DecorItem, type Vector3, type ConfigurationOption } from '../types/expansion';
 
 export class CodeGenerator {
   private indentSize = 4;
@@ -80,7 +80,7 @@ ${this.generateGetRegisteredCountMethod(pack.items)}
     const lines = ['        // Store the IDs assigned by the API'];
 
     items.forEach(item => {
-      const fieldName = this.toCamelCase(item.internalName) + 'Id';
+      const fieldName = `${this.toCamelCase(item.internalName)  }Id`;
       lines.push(`${indent}private int ${fieldName} = -1;`);
     });
 
@@ -142,10 +142,10 @@ ${this.generateGetRegisteredCountMethod(pack.items)}
       if (index > 0) lines.push('');
       
       lines.push(`${indent}    // ${item.itemName}`);
-      const fieldName = this.toCamelCase(item.internalName) + 'Id';
+      const fieldName = `${this.toCamelCase(item.internalName)  }Id`;
       lines.push(`${indent}    ${fieldName} = RegisterItem(new DecorItemData`);
       lines.push(`${indent}    {`);
-      lines.push(this.generateItemData(item, pack, indent + '        '));
+      lines.push(this.generateItemData(item, pack, `${indent  }        `));
       lines.push(`${indent}    });`);
     });
 
@@ -256,7 +256,7 @@ ${indent}}`;
     ];
 
     items.forEach(item => {
-      const fieldName = this.toCamelCase(item.internalName) + 'Id';
+      const fieldName = `${this.toCamelCase(item.internalName)  }Id`;
       lines.push(`${indent}    if (${fieldName} > 0) count++;`);
     });
 
@@ -272,7 +272,7 @@ ${indent}}`;
   }
 
   private generateClassName(pluginName: string): string {
-    return pluginName.replace(/[^a-zA-Z0-9]/g, '') + 'Plugin';
+    return `${pluginName.replace(/[^a-zA-Z0-9]/g, '')  }Plugin`;
   }
 
   private escapeString(str: string): string {

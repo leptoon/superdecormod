@@ -1,4 +1,4 @@
-import { ExpansionPack, DecorItem } from '../types/expansion';
+import { type ExpansionPack, type DecorItem } from '../types/expansion';
 import { CodeGenerator } from './codeGenerator';
 import JSZip from 'jszip';
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, FolderDown, FileCode, CheckCircle, AlertCircle, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Download, FolderDown, FileCode, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Alert, AlertDescription } from '../ui/alert';
@@ -18,24 +18,6 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
   const [isExporting, setIsExporting] = useState(false);
   const pack = useExpansionPackStore(state => state.pack);
   const { toast } = useToast();
-
-  // Check for duplicate item names
-  const duplicateItemNames = React.useMemo(() => {
-    const nameCount = new Map<string, number>();
-    const duplicates = new Set<string>();
-    
-    pack.items.forEach(item => {
-      const nameLower = item.itemName.toLowerCase();
-      const count = nameCount.get(nameLower) || 0;
-      nameCount.set(nameLower, count + 1);
-      
-      if (count > 0) {
-        duplicates.add(item.itemName);
-      }
-    });
-    
-    return Array.from(duplicates);
-  }, [pack.items]);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -78,7 +60,8 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
       }
       
       onClose();
-    } catch (error) {
+    } catch {
+      // Removed the unused 'error' parameter
       toast({
         title: "Export failed",
         description: "An error occurred while exporting. Please try again.",
@@ -98,23 +81,6 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
             Choose how you want to export your expansion pack
           </DialogDescription>
         </DialogHeader>
-
-        {/* Duplicate names warning */}
-        {duplicateItemNames.length > 0 && (
-          <Alert className="border-yellow-200 bg-yellow-50">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription>
-              <strong className="text-yellow-800">Duplicate item names detected!</strong>
-              <p className="text-yellow-700 mt-1">
-                The following item names are used multiple times: {duplicateItemNames.join(', ')}
-              </p>
-              <p className="text-yellow-700 mt-1">
-                While this won't prevent your mod from working, it's recommended to use unique names 
-                for better organization and to avoid confusion in-game.
-              </p>
-            </AlertDescription>
-          </Alert>
-        )}
 
         <div className="space-y-4 my-6">
           {/* Full Project Option */}
