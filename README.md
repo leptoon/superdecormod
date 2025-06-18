@@ -42,7 +42,16 @@ I want to make it easy for creators to release expansion packs for Super Decor. 
 
 [Expansion Pack Generator](https://leptoon.github.io/superdecormod/)
 
-Don't release content that you didn't make unless you have explicit permission from the author. Expansion packs released with infringing content will be reported and taken down.
+To use the pack creator:
+1. Set your plugin name, author name and version number in the Pack Settings. Super Decor supports incremental expansion pack versioning.
+2. Select "Add Item" and enter basic item information.
+3. Move through the rest of the tabs and configure the item.
+Watch the code update in real time in the collapsible code preview panel on the right side of the page.
+4. On the Assets tab, you can use the built in OBJ to JSON converter to convert your 3D model into the format used by Super Decor.
+Alternatively, Super Decor also supports Unity AssetBundles. The Assets tab also gives you the option to generate an asset list. This is especially helpful with expansion packs that contain a lot of items.
+5. Finally, export your expansion pack using the blue Export button at the top of the page, either as a full Visual Studio project with all needed files, or as a standalone C# file.
+
+Disclaimer: Don't release content that you didn't make unless you have explicit permission from the author. Expansion packs released with infringing content will be reported and taken down.
 
 ## Usage
 
