@@ -81,7 +81,7 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-2 min-w-0">
           <Package className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
           <h1 className="text-lg sm:text-xl font-semibold truncate">
-            <span className="hidden sm:inline">Super Decor Pack Creator</span>
+            <span className="hidden sm:inline">Super Decor Expansion Pack Generator</span>
             <span className="sm:hidden">Decor Pack Creator</span>
           </h1>
         </div>

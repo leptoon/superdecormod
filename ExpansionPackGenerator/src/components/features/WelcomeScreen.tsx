@@ -25,7 +25,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onDismiss }) => {
       <div className="flex flex-col items-center justify-center min-h-full p-4 sm:p-8 max-w-6xl mx-auto">
         <div className="text-center mb-4 sm:mb-6">
           <Package className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600 mx-auto mb-3" />
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">Welcome to Super Decor Pack Creator</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">Welcome to the Super Decor Expansion Pack Generator</h1>
           <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
             Create custom expansion packs for Super Decor without writing a single line of code!
           </p>
@@ -35,22 +35,22 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onDismiss }) => {
           <FeatureCard
             icon={<Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />}
             title="Visual Editor"
-            description="Design items with an intuitive interface. Set properties, configure physics, and define placement rules."
+            description="Design items with an intuitive interface."
           />
           <FeatureCard
             icon={<Code className="w-5 h-5 sm:w-6 sm:h-6" />}
             title="Automatic Code Generation"
-            description="Watch your C# code update in real-time as you make changes. No coding experience required!"
+            description="Watch your C# code update in real-time as you make changes."
           />
           <FeatureCard
             icon={<FolderOpen className="w-5 h-5 sm:w-6 sm:h-6" />}
             title="Complete Project Export"
-            description="Download a ready-to-compile Visual Studio project with all necessary files and build scripts."
+            description="Download a ready-to-compile Visual Studio project."
           />
           <FeatureCard
             icon={<Rocket className="w-5 h-5 sm:w-6 sm:h-6" />}
             title="Easy Deployment"
-            description="Build your pack with one click and copy to BepInEx. Your items appear instantly in-game!"
+            description="Build your pack with one click and copy to the BepInEx plugins folder. Your items appear instantly in-game."
           />
         </div>
 
@@ -68,7 +68,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onDismiss }) => {
           <p className="font-medium mb-1">🎯 Quick Start Tip:</p>
           <p className="text-xs sm:text-sm leading-relaxed">
             First, configure your pack settings (bottom left). Then add items and customize their properties. 
-            When ready, export the full project and build it with Visual Studio or the included build scripts!
+            When ready, export the full project and build it with Visual Studio or the included build scripts.
           </p>
         </div>
 

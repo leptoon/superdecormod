@@ -1,4 +1,8 @@
-// objToJsonConverter.ts - Place in src/utils/
+// OBJ to JSON Converter
+// Author: Leptoon
+// Version: 1.0
+// Released: June 17 2025
+
 export interface Vector3 {
   x: number;
   y: number;
