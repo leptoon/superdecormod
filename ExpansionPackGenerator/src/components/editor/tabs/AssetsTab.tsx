@@ -1,11 +1,14 @@
-import React from 'react';
-import { FileImage, Package, Palette, FileText, Download } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileImage, Package, Palette, FileText, Download, Upload } from 'lucide-react';
 import { type DecorItem } from '../../../types/expansion';
 import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
 import { useExpansionPackStore } from '../../../store/expansionPackStore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../ui/dialog';
+import { MeshConverter } from './MeshConverter';
+import { useToast } from '../../ui/use-toast';
 
 interface AssetsTabProps {
   item: DecorItem;
@@ -14,32 +17,8 @@ interface AssetsTabProps {
 
 export const AssetsTab: React.FC<AssetsTabProps> = ({ item, onChange }) => {
   const pack = useExpansionPackStore(state => state.pack);
-
-  // Function to generate asset names based on internal name
-  const generateAssetNames = (internalName: string) => {
-    const baseName = internalName || 'untitled_item';
-    return {
-      iconAssetName: `${baseName}_icon`,
-      meshAssetName: baseName,
-      materialAssetName: `${baseName}_material`
-    };
-  };
-
-  // Update asset names whenever internal name changes
-  React.useEffect(() => {
-    const assetNames = generateAssetNames(item.internalName);
-    
-    // Only update if the values are different to avoid infinite loops
-    if (item.iconAssetName !== assetNames.iconAssetName) {
-      onChange('iconAssetName', assetNames.iconAssetName);
-    }
-    if (item.meshAssetName !== assetNames.meshAssetName) {
-      onChange('meshAssetName', assetNames.meshAssetName);
-    }
-    if (item.materialAssetName !== assetNames.materialAssetName) {
-      onChange('materialAssetName', assetNames.materialAssetName);
-    }
-  }, [item.internalName]);
+  const [showMeshConverter, setShowMeshConverter] = useState(false);
+  const { toast } = useToast();
 
   const generateAssetChecklist = () => {
     const checklist = `Asset Checklist for ${item.itemName}
@@ -74,12 +53,35 @@ Place all files in the Resources folder of your project.`;
     URL.revokeObjectURL(url);
   };
 
+  const handleMeshConverted = (meshName: string, jsonContent: string) => {
+    // Update the mesh asset name to match the converted file
+    onChange('meshAssetName', meshName);
+    
+    // Show success toast
+    toast({
+      title: "Mesh converted successfully",
+      description: `Save the JSON file as "${meshName}.json" in your Resources/Meshes folder.`,
+    });
+    
+    // Close the converter dialog
+    setShowMeshConverter(false);
+    
+    // Auto-download the JSON file
+    const blob = new Blob([jsonContent], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${meshName}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium mb-4">Asset References</h3>
         <p className="text-sm text-gray-600">
-          Asset names are automatically generated based on the item's internal name.
+          Configure the asset files that will be embedded in your expansion pack.
         </p>
       </div>
 
@@ -92,8 +94,7 @@ Place all files in the Resources folder of your project.`;
           <Input
             id="iconAssetName"
             value={item.iconAssetName}
-            disabled
-            className="bg-gray-50"
+            onChange={(e) => onChange('iconAssetName', e.target.value)}
             placeholder="crystal_ball_icon"
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -106,13 +107,32 @@ Place all files in the Resources folder of your project.`;
             <Package className="w-4 h-4" />
             Mesh Asset Name
           </Label>
-          <Input
-            id="meshAssetName"
-            value={item.meshAssetName}
-            disabled
-            className="bg-gray-50"
-            placeholder="crystal_ball"
-          />
+          <div className="flex gap-2">
+            <Input
+              id="meshAssetName"
+              value={item.meshAssetName}
+              onChange={(e) => onChange('meshAssetName', e.target.value)}
+              placeholder="crystal_ball"
+              className="flex-1"
+            />
+            <Dialog open={showMeshConverter} onOpenChange={setShowMeshConverter}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Convert OBJ
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Convert OBJ to JSON</DialogTitle>
+                </DialogHeader>
+                <MeshConverter 
+                  onMeshConverted={handleMeshConverted}
+                  defaultMeshName={item.meshAssetName || item.internalName}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
           <p className="text-xs text-gray-500 mt-1">
             Expected: Resources/Meshes/{item.meshAssetName}.json
           </p>
@@ -126,12 +146,11 @@ Place all files in the Resources folder of your project.`;
           <Input
             id="materialAssetName"
             value={item.materialAssetName}
-            disabled
-            className="bg-gray-50"
+            onChange={(e) => onChange('materialAssetName', e.target.value)}
             placeholder="crystal_ball_material"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Automatically generated from mesh name
+            Usually the same as mesh name + "_material"
           </p>
         </div>
 
@@ -156,6 +175,15 @@ Place all files in the Resources folder of your project.`;
             <li><strong>Normal:</strong> {item.meshAssetName || 'example'}_Normal.png (optional)</li>
           </ul>
           <p className="text-sm mt-2">Place textures in: Resources/Textures/</p>
+        </AlertDescription>
+      </Alert>
+
+      <Alert className="border-blue-200 bg-blue-50">
+        <Upload className="h-4 w-4 text-blue-600" />
+        <AlertTitle className="text-blue-900">OBJ to JSON Converter Available</AlertTitle>
+        <AlertDescription className="text-blue-800">
+          You can now convert OBJ files directly to the JSON format required by Super Decor. 
+          Click the "Convert OBJ" button next to the Mesh Asset Name field to convert your 3D models without Unity.
         </AlertDescription>
       </Alert>
 
