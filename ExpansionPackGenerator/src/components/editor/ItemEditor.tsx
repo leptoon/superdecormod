@@ -65,8 +65,8 @@ export const ItemEditor: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
         {/* Tab List - Scrollable on mobile */}
         <div className="flex-shrink-0 border-b border-gray-200">
           <TabsList className="h-12 w-full rounded-none border-0 bg-gray-50/50 p-0 overflow-x-auto overflow-y-hidden flex">
@@ -82,57 +82,71 @@ export const ItemEditor: React.FC = () => {
           </TabsList>
         </div>
 
-        {/* Tab Content - Scrollable with proper sizing */}
-        <div className="flex-1 overflow-y-auto min-h-0">
-          <TabsContent value="basic" className="m-0 p-4 sm:p-6 h-full">
-            <BasicInfoTab 
-              item={selectedItem} 
-              onChange={handleFieldChange}
-            />
+        {/* Tab Content Container */}
+        <div className="flex-1 min-h-0 relative">
+          <TabsContent value="basic" className="absolute inset-0 m-0 overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <BasicInfoTab 
+                item={selectedItem} 
+                onChange={handleFieldChange}
+              />
+            </div>
           </TabsContent>
 
-          <TabsContent value="economics" className="m-0 p-4 sm:p-6 h-full">
-            <EconomicsTab 
-              item={selectedItem} 
-              onChange={handleFieldChange}
-            />
+          <TabsContent value="economics" className="absolute inset-0 m-0 overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <EconomicsTab 
+                item={selectedItem} 
+                onChange={handleFieldChange}
+              />
+            </div>
           </TabsContent>
 
-          <TabsContent value="physical" className="m-0 p-4 sm:p-6 h-full">
-            <PhysicalTab 
-              item={selectedItem} 
-              onChange={handleFieldChange}
-              onNestedChange={handleNestedFieldChange}
-            />
+          <TabsContent value="physical" className="absolute inset-0 m-0 overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <PhysicalTab 
+                item={selectedItem} 
+                onChange={handleFieldChange}
+                onNestedChange={handleNestedFieldChange}
+              />
+            </div>
           </TabsContent>
 
-          <TabsContent value="collision" className="m-0 p-4 sm:p-6 h-full">
-            <CollisionTab 
-              item={selectedItem} 
-              onChange={handleFieldChange}
-              onNestedChange={handleNestedFieldChange}
-            />
+          <TabsContent value="collision" className="absolute inset-0 m-0 overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <CollisionTab 
+                item={selectedItem} 
+                onChange={handleFieldChange}
+                onNestedChange={handleNestedFieldChange}
+              />
+            </div>
           </TabsContent>
 
-          <TabsContent value="placement" className="m-0 p-4 sm:p-6 h-full">
-            <PlacementTab 
-              item={selectedItem} 
-              onChange={handleFieldChange}
-            />
+          <TabsContent value="placement" className="absolute inset-0 m-0 overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <PlacementTab 
+                item={selectedItem} 
+                onChange={handleFieldChange}
+              />
+            </div>
           </TabsContent>
 
-          <TabsContent value="interaction" className="m-0 p-4 sm:p-6 h-full">
-            <InteractionTab 
-              item={selectedItem} 
-              onChange={handleFieldChange}
-            />
+          <TabsContent value="interaction" className="absolute inset-0 m-0 overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <InteractionTab 
+                item={selectedItem} 
+                onChange={handleFieldChange}
+              />
+            </div>
           </TabsContent>
 
-          <TabsContent value="assets" className="m-0 p-4 sm:p-6 h-full">
-            <AssetsTab 
-              item={selectedItem} 
-              onChange={handleFieldChange}
-            />
+          <TabsContent value="assets" className="absolute inset-0 m-0 overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <AssetsTab 
+                item={selectedItem} 
+                onChange={handleFieldChange}
+              />
+            </div>
           </TabsContent>
         </div>
       </Tabs>

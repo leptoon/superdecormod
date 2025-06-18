@@ -49,8 +49,7 @@ export const PlacementTab: React.FC<PlacementTabProps> = ({ item, onChange }) =>
         <Info className="h-4 w-4" />
         <AlertDescription>
           <strong>Note:</strong> These placement settings are planned features. Items currently follow the placement 
-          rules of their base furniture type. Your settings will be saved in the generated code with 
-          "NOT IMPLEMENTED" comments for when these features are added.
+          rules of their base furniture type.
         </AlertDescription>
       </Alert>
 
@@ -97,8 +96,7 @@ export const PlacementTab: React.FC<PlacementTabProps> = ({ item, onChange }) =>
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Tip:</strong> These settings will be included in your generated code with comments 
-          indicating they are not yet implemented. This ensures your expansion pack will be ready 
+          <strong>Tip:</strong> These settings will be included in your generated code. This ensures your expansion pack will be ready 
           when these features are added to the Super Decor framework.
         </AlertDescription>
       </Alert>
