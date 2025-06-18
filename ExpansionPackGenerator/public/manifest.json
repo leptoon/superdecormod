@@ -1,0 +1,22 @@
+{
+  "name": "Super Decor Expansion Pack Generator",
+  "short_name": "Super Decor Gen",
+  "description": "Create custom expansion packs for Super Decor mod without coding",
+  "start_url": "/superdecormod/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "/superdecormod/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/superdecormod/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

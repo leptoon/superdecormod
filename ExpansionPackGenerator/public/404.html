@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page Not Found - Super Decor Generator</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 40px;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        text-align: center;
+      }
+      .container {
+        max-width: 600px;
+      }
+      h1 {
+        font-size: 3rem;
+        margin: 0 0 1rem;
+        color: #1f2937;
+      }
+      p {
+        font-size: 1.125rem;
+        color: #6b7280;
+        margin: 0 0 2rem;
+      }
+      a {
+        display: inline-block;
+        padding: 12px 24px;
+        background: #3b82f6;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+      a:hover {
+        background: #2563eb;
+      }
+      .icon {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="icon">📦</div>
+      <h1>Page Not Found</h1>
+      <p>The page you're looking for doesn't exist. Let's get you back to the generator!</p>
+      <a href="/superdecormod/">Go to Generator</a>
+    </div>
+    <script>
+      // Redirect to main page after 3 seconds
+      setTimeout(() => {
+        window.location.href = '/superdecormod/';
+      }, 3000);
+    </script>
+  </body>
+</html>

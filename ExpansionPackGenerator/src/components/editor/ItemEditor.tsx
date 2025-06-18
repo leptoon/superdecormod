@@ -1,0 +1,169 @@
+import React, { useState } from 'react';
+import { useSelectedItem, useExpansionPackStore } from '../../store/expansionPackStore';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { BasicInfoTab } from './tabs/BasicInfoTab';
+import { EconomicsTab } from './tabs/EconomicsTab';
+import { PhysicalTab } from './tabs/PhysicalTab';
+import { CollisionTab } from './tabs/CollisionTab';
+import { PlacementTab } from './tabs/PlacementTab';
+import { InteractionTab } from './tabs/InteractionTab';
+import { AssetsTab } from './tabs/AssetsTab';
+import { Button } from '../ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+const tabs = [
+  { id: 'basic', label: 'Basic' },
+  { id: 'economics', label: 'Economics' },
+  { id: 'physical', label: 'Physical' },
+  { id: 'collision', label: 'Collision' },
+  { id: 'placement', label: 'Placement' },
+  { id: 'interaction', label: 'Interaction' },
+  { id: 'assets', label: 'Assets' },
+];
+
+export const ItemEditor: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('basic');
+  const selectedItem = useSelectedItem();
+  const updateItem = useExpansionPackStore(state => state.updateItem);
+
+  if (!selectedItem) {
+    return null;
+  }
+
+  const handleFieldChange = (field: string, value: any) => {
+    updateItem(selectedItem.internalName, { [field]: value });
+  };
+
+  const handleNestedFieldChange = (parentField: string, field: string, value: any) => {
+    updateItem(selectedItem.internalName, {
+      [parentField]: {
+        ...(selectedItem[parentField as keyof typeof selectedItem] as any || {}),
+        [field]: value
+      }
+    });
+  };
+
+  const currentTabIndex = tabs.findIndex(t => t.id === activeTab);
+  const canGoPrevious = currentTabIndex > 0;
+  const canGoNext = currentTabIndex < tabs.length - 1;
+
+  const goToPreviousTab = () => {
+    if (canGoPrevious) {
+      setActiveTab(tabs[currentTabIndex - 1].id);
+    }
+  };
+
+  const goToNextTab = () => {
+    if (canGoNext) {
+      setActiveTab(tabs[currentTabIndex + 1].id);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header - Fixed height, responsive padding */}
+      <div className="p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
+        <h2 className="text-lg font-semibold truncate">{selectedItem.itemName}</h2>
+        <p className="text-sm text-gray-500 truncate">{selectedItem.internalName}</p>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+        {/* Tab List - Responsive design */}
+        <div className="border-b border-gray-200 flex-shrink-0">
+          <TabsList className="w-full justify-start px-2 sm:px-4 h-12 bg-gray-50 rounded-none overflow-x-auto">
+            {tabs.map(tab => (
+              <TabsTrigger 
+                key={tab.id} 
+                value={tab.id} 
+                className="data-[state=active]:bg-white whitespace-nowrap flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+
+        {/* Tab Content - Scrollable with proper sizing */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <TabsContent value="basic" className="m-0 p-4 sm:p-6 h-full">
+            <BasicInfoTab 
+              item={selectedItem} 
+              onChange={handleFieldChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="economics" className="m-0 p-4 sm:p-6 h-full">
+            <EconomicsTab 
+              item={selectedItem} 
+              onChange={handleFieldChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="physical" className="m-0 p-4 sm:p-6 h-full">
+            <PhysicalTab 
+              item={selectedItem} 
+              onChange={handleFieldChange}
+              onNestedChange={handleNestedFieldChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="collision" className="m-0 p-4 sm:p-6 h-full">
+            <CollisionTab 
+              item={selectedItem} 
+              onChange={handleFieldChange}
+              onNestedChange={handleNestedFieldChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="placement" className="m-0 p-4 sm:p-6 h-full">
+            <PlacementTab 
+              item={selectedItem} 
+              onChange={handleFieldChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="interaction" className="m-0 p-4 sm:p-6 h-full">
+            <InteractionTab 
+              item={selectedItem} 
+              onChange={handleFieldChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="assets" className="m-0 p-4 sm:p-6 h-full">
+            <AssetsTab 
+              item={selectedItem} 
+              onChange={handleFieldChange}
+            />
+          </TabsContent>
+        </div>
+      </Tabs>
+
+      {/* Navigation Footer - Responsive */}
+      <div className="p-3 sm:p-4 border-t border-gray-200 flex justify-between flex-shrink-0">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={goToPreviousTab}
+          disabled={!canGoPrevious}
+          className="text-xs sm:text-sm"
+        >
+          <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+          <span className="hidden sm:inline">Previous Tab</span>
+          <span className="sm:hidden">Prev</span>
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={goToNextTab}
+          disabled={!canGoNext}
+          className="text-xs sm:text-sm"
+        >
+          <span className="hidden sm:inline">Next Tab</span>
+          <span className="sm:hidden">Next</span>
+          <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
+        </Button>
+      </div>
+    </div>
+  );
+};
