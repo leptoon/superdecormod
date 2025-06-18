@@ -35,12 +35,17 @@ export const ItemEditor: React.FC = () => {
   };
 
   const handleNestedFieldChange = (parentField: string, field: string, value: any) => {
-    updateItem(selectedItem.internalName, {
-      [parentField]: {
-        ...selectedItem[parentField as keyof typeof selectedItem],
-        [field]: value
-      }
-    });
+    const parentValue = selectedItem[parentField as keyof typeof selectedItem];
+    
+    // Ensure the parent value is an object before spreading
+    if (parentValue && typeof parentValue === 'object') {
+      updateItem(selectedItem.internalName, {
+        [parentField]: {
+          ...parentValue,
+          [field]: value
+        }
+      });
+    }
   };
 
   const currentTabIndex = tabs.findIndex(t => t.id === activeTab);
