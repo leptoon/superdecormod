@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Download, FolderDown, FileCode, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Download, FolderDown, FileCode, CheckCircle, AlertCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Alert, AlertDescription } from '../ui/alert';
@@ -13,13 +13,42 @@ interface ExportOptionsModalProps {
   onClose: () => void;
 }
 
-export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, onClose }) => {
+export function ExportOptionsModal({ open, onClose }: ExportOptionsModalProps) {
   const [selectedOption, setSelectedOption] = useState<'code' | 'project'>('project');
   const [isExporting, setIsExporting] = useState(false);
   const pack = useExpansionPackStore(state => state.pack);
   const { toast } = useToast();
 
+  // Check for duplicate internal names
+  const duplicateItems = useMemo(() => {
+    const nameCount = new Map<string, number>();
+    const duplicates: string[] = [];
+    
+    pack.items.forEach(item => {
+      const count = nameCount.get(item.internalName) || 0;
+      nameCount.set(item.internalName, count + 1);
+      
+      if (count === 1) {
+        duplicates.push(item.internalName);
+      }
+    });
+    
+    return duplicates;
+  }, [pack.items]);
+
+  const hasDuplicates = duplicateItems.length > 0;
+
   const handleExport = async () => {
+    // Prevent export if there are duplicates
+    if (hasDuplicates) {
+      toast({
+        title: "Cannot export with duplicate items",
+        description: "Please rename duplicate items before exporting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsExporting(true);
     
     try {
@@ -33,7 +62,7 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${pack.pluginId.replace(/\./g, '_')}.cs`;
+        a.download = pack.pluginId.replace(/\./g, '_') + '.cs';
         a.click();
         URL.revokeObjectURL(url);
 
@@ -49,7 +78,7 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${pack.pluginName.replace(/[^a-zA-Z0-9]/g, '')}_Project.zip`;
+        a.download = pack.pluginName.replace(/[^a-zA-Z0-9]/g, '') + '_Project.zip';
         a.click();
         URL.revokeObjectURL(url);
 
@@ -61,7 +90,6 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
       
       onClose();
     } catch {
-      // Removed the unused 'error' parameter
       toast({
         title: "Export failed",
         description: "An error occurred while exporting. Please try again.",
@@ -71,6 +99,22 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
       setIsExporting(false);
     }
   };
+
+  // Build className strings separately to avoid nested template literal issues
+  const projectOptionClassName = hasDuplicates 
+    ? 'p-4 rounded-lg border-2 transition-all opacity-50 cursor-not-allowed border-gray-200' 
+    : selectedOption === 'project'
+      ? 'p-4 rounded-lg border-2 transition-all cursor-pointer border-blue-500 bg-blue-50'
+      : 'p-4 rounded-lg border-2 transition-all cursor-pointer border-gray-200 hover:border-gray-300';
+
+  const codeOptionClassName = hasDuplicates 
+    ? 'p-4 rounded-lg border-2 transition-all opacity-50 cursor-not-allowed border-gray-200' 
+    : selectedOption === 'code'
+      ? 'p-4 rounded-lg border-2 transition-all cursor-pointer border-blue-500 bg-blue-50'
+      : 'p-4 rounded-lg border-2 transition-all cursor-pointer border-gray-200 hover:border-gray-300';
+
+  const folderIconClassName = hasDuplicates ? 'w-6 h-6 text-gray-400 mt-1' : 'w-6 h-6 text-blue-600 mt-1';
+  const fileIconClassName = hasDuplicates ? 'w-6 h-6 text-gray-400 mt-1' : 'w-6 h-6 text-gray-600 mt-1';
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -82,18 +126,30 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
           </DialogDescription>
         </DialogHeader>
 
+        {/* Duplicate Items Warning */}
+        {hasDuplicates && (
+          <Alert variant="destructive" className="my-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Duplicate items detected!</strong> The following internal names appear multiple times:
+              <ul className="mt-2 list-disc list-inside">
+                {duplicateItems.map(name => (
+                  <li key={name} className="text-sm font-mono">{name}</li>
+                ))}
+              </ul>
+              <p className="mt-2">Please rename these items before exporting to avoid conflicts.</p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-4 my-6">
           {/* Full Project Option */}
           <div
-            onClick={() => setSelectedOption('project')}
-            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-              selectedOption === 'project'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
+            onClick={() => !hasDuplicates && setSelectedOption('project')}
+            className={projectOptionClassName}
           >
             <div className="flex items-start gap-3">
-              <FolderDown className="w-6 h-6 text-blue-600 mt-1" />
+              <FolderDown className={folderIconClassName} />
               <div className="flex-1">
                 <h3 className="font-semibold flex items-center gap-2">
                   Full Visual Studio Project
@@ -126,15 +182,11 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
 
           {/* Code Only Option */}
           <div
-            onClick={() => setSelectedOption('code')}
-            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-              selectedOption === 'code'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
+            onClick={() => !hasDuplicates && setSelectedOption('code')}
+            className={codeOptionClassName}
           >
             <div className="flex items-start gap-3">
-              <FileCode className="w-6 h-6 text-gray-600 mt-1" />
+              <FileCode className={fileIconClassName} />
               <div className="flex-1">
                 <h3 className="font-semibold">C# Code Only</h3>
                 <p className="text-sm text-gray-600 mt-1">
@@ -148,7 +200,7 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
           </div>
         </div>
 
-        {selectedOption === 'project' && (
+        {selectedOption === 'project' && !hasDuplicates && (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -179,11 +231,20 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleExport} disabled={isExporting}>
+          <Button 
+            onClick={handleExport} 
+            disabled={isExporting || hasDuplicates}
+            variant={hasDuplicates ? "destructive" : "default"}
+          >
             {isExporting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                 Exporting...
+              </>
+            ) : hasDuplicates ? (
+              <>
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                Fix Duplicates First
               </>
             ) : (
               <>
@@ -196,4 +257,4 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, on
       </DialogContent>
     </Dialog>
   );
-};
+}

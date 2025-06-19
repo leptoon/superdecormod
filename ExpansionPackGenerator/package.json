@@ -57,5 +57,9 @@
     "vite": "^6.3.5",
     "globals": "^15.14.0",
     "@eslint/js": "^9.17.0"
-  }
+  },
+  "description": "Create custom expansion packs for Super Decor without writing any code! This visual tool lets you design decorative items and generates a complete Visual Studio project ready to compile.",
+  "main": "eslint.config.js",
+  "author": "",
+  "license": "ISC"
 }
