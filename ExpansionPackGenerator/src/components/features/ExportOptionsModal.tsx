@@ -13,7 +13,7 @@ interface ExportOptionsModalProps {
   onClose: () => void;
 }
 
-export function ExportOptionsModal({ open, onClose }: ExportOptionsModalProps) {
+export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ open, onClose }) => {
   const [selectedOption, setSelectedOption] = useState<'code' | 'project'>('project');
   const [isExporting, setIsExporting] = useState(false);
   const pack = useExpansionPackStore(state => state.pack);
@@ -133,7 +133,7 @@ export function ExportOptionsModal({ open, onClose }: ExportOptionsModalProps) {
             <AlertDescription>
               <strong>Duplicate items detected!</strong> The following internal names appear multiple times:
               <ul className="mt-2 list-disc list-inside">
-                {duplicateItems.map(name => (
+                {duplicateItems.map((name: string) => (
                   <li key={name} className="text-sm font-mono">{name}</li>
                 ))}
               </ul>
@@ -257,4 +257,4 @@ export function ExportOptionsModal({ open, onClose }: ExportOptionsModalProps) {
       </DialogContent>
     </Dialog>
   );
-}
+};
